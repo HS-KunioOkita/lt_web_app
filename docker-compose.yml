@@ -1,0 +1,58 @@
+version: "3"
+
+networks:
+  docker-network:
+    driver: bridge
+
+services:
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - firebase
+    networks: [docker-network]
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    ports:
+      - 5000:5000
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - firebase
+    networks: [docker-network]
+    env_file:
+      - dev.env
+    environment:
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
+      - GCLOUD_PROJECT=h-develop2
+      - PYTHONUNBUFFERED=1
+
+  firebase:
+    container_name: firebase
+    build:
+      context: ./frontend/emulator/
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/emulator/firebase/emulators/:/opt/workspace:cached
+      - ./frontend/emulator/firebase/bin/:/root/.cache:cached
+      - ./frontend/emulator/firebase/config/:/root/.config:cached
+    ports:
+      - 4000:4000 # Emulator Suite UI
+      - 8080:8080 # Cloud Firestore
+      - 9099:9099 # Firebase Authentication
+      - 9199:9199 # Firebase Storage
+    working_dir: /opt/workspace
+    command: ['firebase', 'emulators:start', '--import=./frontend/emulator/firebase/emulators/export', '--export-on-exit']
+    tty: true
+    networks: [docker-network]

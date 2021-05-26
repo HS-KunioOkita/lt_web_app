@@ -2,29 +2,44 @@
 
 > web app for LT.
 
+
+## Backend Setup
+
+バックエンドのFirebaseの環境設定を実施する
+1. 下記から新しい秘密鍵を生成する
+https://console.firebase.google.com/u/1/project/h-develop2/settings/serviceaccounts/adminsdk?hl=ja
+2. backend/secret/ 配下にJSONファイルを配置する
+3. 初期設定スクリプトを実行する
+``` bash
+cd backend/
+./init.sh <JSONファイルのパス>
+# Ex.) ./init.sh secret/h-develop2-firebase-adminsdk-hbh6m-c3e2782116.json
+```
+
+
 ## Build Setup
 
 ``` bash
-# install dependencies
-npm install
+# Dockerでアプリ、サーバー、Firebaseエミュレーターを全てビルド&起動
+docker-compose build
+docker-compose up -d
 
-# serve with hot reload at localhost:8080
-npm run dev
+# アプリだけリビルドする
+docker-compose up -d --no-deps --build frontend
+# サーバーだけリビルドする
+docker-compose up -d --no-deps --build backend
+# Firebaseエミュレーターだけリビルドする
+docker-compose up -d --no-deps --build firebase
 
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
+# アプリ: http://localhost:3000/
+# サーバー: http://localhost:5000/
+# FirebaseエミュレーターのUI管理画面: http://localhost:4000/
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Deploy Setup
+
+``` bash
+# GAEにデプロイする
+# フロントエンドのビルドも実施するため、時間がかかる場合がある
+./deploy.sh
