@@ -8,8 +8,16 @@ from libs.utils import convert_keys_to_camel_case, get_now
 import os
 
 
+# 秘密鍵のファイルパスが正しいか確認
+credential_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+if not os.path.isfile(credential_path):
+    raise InternalServerError(payload={
+        'message': 'Firebase credential json file path is invalid.',
+        'path': credential_path,
+    })
+
 firebase_admin.initialize_app(options={
-    'projectId': os.environ.get('GCLOUD_PROJECT')
+    'projectId': os.environ.get('GCLOUD_PROJECT'),
 })
 
 

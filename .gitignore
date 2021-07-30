@@ -9,6 +9,7 @@ frontend/test/e2e/reports/
 frontend/selenium-debug.log
 
 backend/secret/*
+!backend/secret/.gitkeep
 
 # Editor directories and files
 .idea
