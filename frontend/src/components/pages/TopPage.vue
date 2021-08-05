@@ -6,19 +6,14 @@
         <v-list-item>
           メニュー
         </v-list-item>
-
         <v-divider />
-
-        <v-list dense nav>
-          <v-list-item v-for="navigation in navigations" :key="navigation.name" :to="navigation.link">
-            <v-list-item-icon>
-              <v-icon>{{ navigation.icon }}</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>{{ navigation.name }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+        <List
+          :item="navigations"
+          dense="dense"
+          nav="nav"
+          keyName="name"
+          to="link"
+        />
       </v-container>
     </v-navigation-drawer>
 
@@ -69,6 +64,7 @@
 
 <script>
 import { reload } from '@/libs/utils'
+import { setting, ENV } from '@/libs/setting'
 const ADMIN_MENU = {
   name: '管理者ページ',
   icon: 'mdi-check-decagram',
@@ -84,6 +80,11 @@ export default {
           name: 'くじ引き',
           icon: 'mdi-slot-machine',
           link: '/lottery/'
+        },
+        {
+          name: 'ドキュメント',
+          icon: 'mdi-file-document-multiple',
+          link: `/document/`
         }
       ],
       userSettings: [
@@ -112,22 +113,30 @@ export default {
       ]
     }
   },
-  created () {
+
+  async created () {
     if (this.$store.state.user.adminFlg) {
       this.userSettings.push(ADMIN_MENU)
     }
+
+    if (setting === ENV.prod) {
+      this.navigations.pop()
+    }
   },
+
   methods: {
     action (userSetting) {
       return userSetting.action !== undefined ? userSetting.action() : this.empty()
     },
     empty () {}
   },
+
   computed: {
     adminFlg () {
       return this.$store.state.user.adminFlg
     }
   },
+
   watch: {
     adminFlg (val, old) {
       var action = () => {}

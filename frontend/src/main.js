@@ -17,6 +17,9 @@ import {
 } from 'vee-validate'
 import * as rules from 'vee-validate/dist/rules'
 import ja from 'vee-validate/dist/locale/ja'
+import SlideUpDown from 'vue-slide-up-down'
+import AccordionMenu from '@/components/ui/AccordionMenu'
+import AccordionList from '@/components/ui/AccordionList'
 import NumberField from '@/components/ui/NumberField'
 import EmailField from '@/components/ui/EmailField'
 import PasswordField from '@/components/ui/PasswordField'
@@ -29,6 +32,9 @@ import { VueLoading } from 'vue-loading-template'
 import LoadingDialog from '@/components/ui/LoadingDialog'
 import InfomationDialog from '@/components/ui/InfomationDialog'
 import ErrorDialog from '@/components/ui/ErrorDialog'
+import List from '@/components/ui/List'
+import ListGroup from '@/components/ui/ListGroup'
+import Editor from '@tinymce/tinymce-vue'
 import * as customRules from '@/libs/validation'
 import mixins from '@/libs/mixins/mixins'
 import '@/css/common.css'
@@ -46,6 +52,9 @@ localize('ja', ja)
 
 Vue.config.productionTip = false
 Vue.component('ModalDialog', ModalDialog)
+Vue.component('SlideUpDown', SlideUpDown)
+Vue.component('AccordionMenu', AccordionMenu)
+Vue.component('AccordionList', AccordionList)
 Vue.component('NumberField', NumberField)
 Vue.component('EmailField', EmailField)
 Vue.component('PasswordField', PasswordField)
@@ -60,6 +69,9 @@ Vue.component('VueLoading', VueLoading)
 Vue.component('LoadingDialog', LoadingDialog)
 Vue.component('InfomationDialog', InfomationDialog)
 Vue.component('ErrorDialog', ErrorDialog)
+Vue.component('List', List)
+Vue.component('ListGroup', ListGroup)
+Vue.component('Editor', Editor)
 Vue.use(VueAxios, axios)
 Vue.use(Toasted)
 Vue.mixin(mixins)

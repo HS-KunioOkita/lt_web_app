@@ -1207,6 +1207,7 @@ export default {
   }
 }
 </script>
+
 <style scoped>
   .lotteryButton {
     padding-left: 10px;

@@ -21,6 +21,11 @@ const mixins = {
           this.loadingDialogInstance.closeLoadingDialog()
           this.loadingDialogInstance = null
         }
+      },
+
+      // リッチテキストエディタの設定
+      tinyMCE: {
+        apikey: 'txb6vef1adktcjrnnv72w3yqrhdyjfqvm9c6hsev37n2526s'
       }
     }
   },

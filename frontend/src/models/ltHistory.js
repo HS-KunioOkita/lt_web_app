@@ -20,7 +20,7 @@ export class LTHistory extends ModelBase {
 
   /**
    * LTの実施履歴を全て取得する
-   * @returns Userモデルのリスト
+   * @returns LTHistoryモデルのリスト
    */
   static async getAllHistory () {
     const ltHistoryList_ = await firebase.db.getAllDocDataList(ltHistoryCollection)
@@ -37,6 +37,7 @@ export class LTHistory extends ModelBase {
    * @param {int} index 表示する順番
    * @param {Date} date 日付
    * @param {Array} details 詳細
+   * @param {Object} editing コンテンツの編集中情報
    * @returns LTHistoryモデル
    */
   static async create (index = null, date = null, details = [], editing = {}) {
