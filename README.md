@@ -18,6 +18,13 @@ cd backend/
 ./init.sh secret/h-develop2-firebase-adminsdk-hbh6m-c3e2782116.json
 ```
 
+## Frontend Deploy
+
+``` bash
+cd frontend/
+npm install
+npm run build
+```
 
 ## Build Setup
 
