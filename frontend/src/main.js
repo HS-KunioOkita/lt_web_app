@@ -2,8 +2,8 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import vuetify from '@/plugins/vuetify'
-import App from './App'
-import router from './router'
+import App from '@/App'
+import router from '@/router'
 import store from '@/store'
 import ModalDialog from '@/components/ui/ModalDialog'
 import axios from 'axios'
@@ -38,6 +38,8 @@ import Editor from '@tinymce/tinymce-vue'
 import * as customRules from '@/libs/validation'
 import mixins from '@/libs/mixins/mixins'
 import '@/css/common.css'
+import mavonEditor from 'mavon-editor'
+import 'mavon-editor/dist/css/index.css'
 
 // ルール設定
 for (var rule in rules) {
@@ -74,6 +76,7 @@ Vue.component('ListGroup', ListGroup)
 Vue.component('Editor', Editor)
 Vue.use(VueAxios, axios)
 Vue.use(Toasted)
+Vue.use(mavonEditor)
 Vue.mixin(mixins)
 
 /* eslint-disable no-new */

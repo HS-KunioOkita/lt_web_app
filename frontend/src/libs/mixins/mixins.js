@@ -4,6 +4,24 @@ import ModalDialog from '@/components/ui/ModalDialog'
 import InfomationDialog from '@/components/ui/InfomationDialog'
 import ErrorDialog from '@/components/ui/ErrorDialog'
 import LoadingDialog from '@/components/ui/LoadingDialog'
+import Md from 'markdown-it'
+import hljs from 'highlight.js'
+import sanitizer from 'markdown-it-sanitizer'
+import emoji from 'markdown-it-emoji'
+import katex from '@iktakahiro/markdown-it-katex'
+import resizeImg from 'markdown-it-imsize'
+import sup from 'markdown-it-sup'
+import sub from 'markdown-it-sub'
+import checkbox from 'markdown-it-checkbox'
+import container from 'markdown-it-container'
+import ins from 'markdown-it-ins'
+import mark from 'markdown-it-mark'
+import footnote from 'markdown-it-footnote'
+import deflist from 'markdown-it-deflist'
+import abbr from 'markdown-it-abbr'
+import plantuml from 'markdown-it-plantuml'
+import multimdTable from 'markdown-it-multimd-table'
+import br from 'markdown-it-br'
 
 // 全コンポーネントで使用できる共通データ
 const mixins = {
@@ -22,6 +40,35 @@ const mixins = {
           this.loadingDialogInstance = null
         }
       },
+
+      md: new Md({
+        highlight: function (code, lang) {
+          return hljs.highlightAuto(code, [lang]).value
+        },
+        html: true,
+        linkify: true,
+        breaks: true,
+        typographer: true
+      })
+        .use(katex, { throwOnError: false, errorColor: '#cc0000' })
+        .use(emoji)
+        .use(checkbox)
+        .use(sanitizer)
+        .use(resizeImg, { autofill: true })
+        .use(sup)
+        .use(sub)
+        .use(ins)
+        .use(mark)
+        .use(footnote)
+        .use(deflist)
+        .use(abbr)
+        .use(container, 'info')
+        .use(container, 'success')
+        .use(container, 'warning')
+        .use(container, 'danger')
+        .use(plantuml)
+        .use(multimdTable)
+        .use(br),
 
       // リッチテキストエディタの設定
       tinyMCE: {

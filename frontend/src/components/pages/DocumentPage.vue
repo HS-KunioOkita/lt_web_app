@@ -27,17 +27,17 @@
         <div class="documentResource">
           <div
             v-if="!editing"
-            v-html="htmlResource.resource"
-          />
-          <div v-else>
-            <Editor
-              ref="editor"
-              v-model="editedHtml"
-              :api-key="tinyMCE.apikey"
-              :initialValue="editedHtml"
-              :init="init"
-            />
+            class="markdown-body"
+          >
+            <div v-html="md.render(htmlResource.resource)" />
           </div>
+          <mavon-editor
+            v-else
+            v-model="editedHtml"
+            language="ja"
+            placeholder="編集エリア"
+            class="editor"
+          />
         </div>
       </div>
     </div>
@@ -53,18 +53,23 @@ export default {
     return {
       htmlResources: {},
       pageId: '',
-      htmlResource: '',
+      htmlResource: {
+        id: '',
+        name: '',
+        resource: ''
+      },
       documentList: [],
 
       editing: false,
       init: {
         height: 800,
         menubar: false,
+        remove_linebreaks: false,
         table_toolbar: [
           'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol'
         ],
         plugins: [
-          'print preview fullpage importcss searchreplace autolink autosave save directionality visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern noneditable help charmap quickbars emoticons'
+          'print preview importcss searchreplace autolink autosave save directionality visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern noneditable help charmap quickbars emoticons'
         ],
         toolbar: [
           'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help table'
@@ -86,22 +91,22 @@ export default {
         {
           id: 'id1',
           name: 'test1',
-          resource: '<div>test だよ<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br><br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>aa<br>a</div>'
+          resource: '- heading'
         },
         {
           id: 'id2',
           name: 'test2',
-          resource: '<div>うおおおおおおおおお</div>',
+          resource: '## heading',
           sub: [
             {
               id: 'id2-1',
               name: 'test2-1',
-              resource: '<div>ahee</div>',
+              resource: '### heading',
               sub: [
                 {
                   id: 'id2-1-1',
                   name: 'test2-1-1',
-                  resource: '<div>待て！！！！</div>'
+                  resource: 'test'
                 }
               ]
             }
@@ -112,7 +117,7 @@ export default {
       var documentList = []
 
       for (var resource of resources) {
-        console.log(resource)
+        // console.log(resource)
         documentList.push({
           id: resource.id,
           name: resource.name,
@@ -145,12 +150,14 @@ export default {
     },
 
     savePage () {
+      // console.log(this.editedHtml)
       this.htmlResource.resource = this.editedHtml
       this.editing = false
+
+      console.log(this.md.render(this.editedHtml))
     },
 
     selectItem (item) {
-      console.log(item)
       this.htmlResource = this.htmlResources[item.id]
     }
   }
@@ -183,6 +190,11 @@ export default {
     height: 100%;
     overflow-y: scroll;
     padding: 10px;
+  }
+
+  .editor {
+    width: 100%;
+    height: 100%;
   }
 
   .sideMenu {
