@@ -243,6 +243,9 @@ export default {
   },
 
   methods: {
+    /**
+     * 初期化処理
+     */
     async initialize () {
       try {
         this.loading = true
@@ -272,6 +275,9 @@ export default {
         this.loading = false
       }
     },
+    /**
+     * スナップショット初期処理
+     */
     async initOnSnapShot () {
       this.listner = await User.onSnapshots(async (snapshot) => {
         if (this.myOperation) {

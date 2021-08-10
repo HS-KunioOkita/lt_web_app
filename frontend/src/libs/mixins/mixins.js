@@ -1,10 +1,11 @@
-import { convertStringFromDate } from '../utils'
+import { convertStringFromDate } from '@/libs/utils'
 import Vue from 'vue'
 import ModalDialog from '@/components/ui/ModalDialog'
 import InfomationDialog from '@/components/ui/InfomationDialog'
 import ErrorDialog from '@/components/ui/ErrorDialog'
 import LoadingDialog from '@/components/ui/LoadingDialog'
 
+// 全コンポーネントで使用できる共通データ
 const mixins = {
   data () {
     return {
@@ -23,10 +24,12 @@ const mixins = {
       }
     }
   },
+
   methods: {
     convertStringFromDate (date) {
       return convertStringFromDate(date)
     },
+
     async $dialog (payload) {
       const VM = Vue.extend(payload.components)
       return new VM({

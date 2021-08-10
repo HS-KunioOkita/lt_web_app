@@ -45,7 +45,7 @@
                 <div class="lotteryButton">
                   <v-btn
                     class="info"
-                    @click="openChart"
+                    @click="openLotteryDialog"
                   >
                     抽選
                   </v-btn>
@@ -55,7 +55,7 @@
             <template v-slot:[`item.date`]="{ item }">
               <DatePickerEditDialog
                 v-model="item.date"
-                :save="save.bind(this, item)"
+                :save="saveLTHistory.bind(this, item)"
                 :open="operateEditDialog.bind(this, item, {
                   date: $store.state.user.uid
                 })"
@@ -76,7 +76,7 @@
                 :items="getUserListForSelect()"
                 itemText="name"
                 itemValue="uid"
-                :save="save.bind(this, item)"
+                :save="saveLTHistory.bind(this, item)"
                 :open="operateDetailsEditDialog.bind(this, item, i, 'uid', $store.state.user.uid)"
                 :close="operateDetailsEditDialog.bind(this, item, i, 'uid', null)"
                 :disabled="isDisabledEditDialog(item.editing.details[i].uid)"
@@ -91,7 +91,7 @@
                 v-model="item.details[i].contents"
                 name="発表内容"
                 rules="contents"
-                :save="save.bind(this, item)"
+                :save="saveLTHistory.bind(this, item)"
                 :open="operateDetailsEditDialog.bind(this, item, i, 'contents', $store.state.user.uid)"
                 :close="operateDetailsEditDialog.bind(this, item, i, 'contents', null)"
                 :disabled="isDisabledEditDialog(item.editing.details[i].contents)"
@@ -147,7 +147,7 @@
 
     <!-- 抽選画面 -->
     <v-dialog
-      v-model="dialog"
+      v-model="lotteryDialog"
       width="1000px"
       persistent
     >
@@ -197,7 +197,7 @@
             color="info darken-1"
             text
             :disabled="stillChoosing"
-            @click="closeChart"
+            @click="closeLotteryDialog"
           >Cancel</v-btn>
           <v-btn
             color="info darken-1"
@@ -315,7 +315,7 @@ export default {
   },
   data: () => ({
     loading: false,
-    dialog: false,
+    lotteryDialog: false,
     lotteryTitle: TITLE_LOTTERY,
     numOfPresenters: 0,
     maxNumOfPresenters: 0,
@@ -429,6 +429,9 @@ export default {
   },
 
   methods: {
+    /**
+     * 初期化処理
+     */
     async initialize () {
       this.loading = true
 
@@ -450,6 +453,9 @@ export default {
 
       this.loading = false
     },
+    /**
+     * ユーザーデータ初期処理
+     */
     async initUserDataList () {
       // 全ユーザー情報を取得
       const allUserList = await User.getAllUsers()
@@ -512,6 +518,9 @@ export default {
       this.allUserList = allUserList
       this.userDataList = userDataList
     },
+    /**
+     * LT履歴初期処理
+     */
     async initAllLTHistory () {
       const allLTHistory = await LTHistory.getAllHistory()
 
@@ -566,6 +575,9 @@ export default {
         })
       }
     },
+    /**
+     * グラフのオプション初期処理
+     */
     initChartOptions () {
       const startDateData = this.getMinDateData(this.allLTHistory, 'date')
       const endDateData = this.getMaxDateData(this.allLTHistory, 'date')
@@ -585,6 +597,9 @@ export default {
     initImplementationLTDate () {
       this.implementationLTDate = getDay(DAY.FRIDAY)
     },
+    /**
+     * グラフ初期処理
+     */
     initChartData () {
       this.chartData = {
         labels: [],
@@ -597,6 +612,9 @@ export default {
         ]
       }
     },
+    /**
+     * Firestoreのスナップショットの初期処理
+     */
     async initOnSnapShots () {
       // LT実施履歴の変更を監視
       this.ltHistoryListner = await LTHistory.onSnapshots(async (snapshot) => {
@@ -661,9 +679,19 @@ export default {
       })
     },
 
+    /**
+     * 指定されたuidのユーザーを探す
+     * @param {string} uid uid
+     * @returns ユーザー
+     */
     findUser (uid) {
       return this.allUserList.find((v) => v.uid === uid)
     },
+    /**
+     * 指定されたuidのユーザー名を取得する
+     * @param {string} uid uid
+     * @returns ユーザー名
+     */
     findUserName (uid) {
       if (!uid || this.userDataList.length === 0) {
         // uidが空文字の場合やユーザーデータが存在しない場合は空文字を返す
@@ -676,6 +704,10 @@ export default {
       }
       return '存在しないユーザーです'
     },
+    /**
+     * 全ユーザーのデータをリストで取得する
+     * @returns 全ユーザーリスト
+     */
     getUserListForSelect () {
       const userList = this.userDataList.map((x) => {
         return x.user
@@ -688,7 +720,10 @@ export default {
       return userList
     },
 
-    openChart () {
+    /**
+     * 抽選画面を開く
+     */
+    openLotteryDialog () {
       // スキップにチェックがついていないユーザーを抽出
       this.userDataListToDraw = this.userDataList.filter(x => !x.checked)
       const drawNum = this.userDataListToDraw.length
@@ -696,14 +731,20 @@ export default {
       this.maxNumOfPresenters = this.maxNumOfPresenters > drawNum ? drawNum : this.maxNumOfPresenters
       this.numOfPresenters = this.maxNumOfPresenters
 
-      this.updateChartData(this.defaultScoreList)
-      this.dialog = true
+      this.updateLotteryData(this.defaultScoreList)
+      this.lotteryDialog = true
     },
-    closeChart () {
-      this.dialog = false
+    /**
+     * 抽選画面を閉じる
+     */
+    closeLotteryDialog () {
+      this.lotteryDialog = false
       this.initImplementationLTDate()
       this.initChartData()
     },
+    /**
+     * 抽選した次の発表者を保存する
+     */
     async saveNextUsers () {
       this.closeResultScreen()
 
@@ -748,32 +789,46 @@ export default {
         await this.updateLTHistory(item, data)
       }
 
-      this.closeChart()
+      this.closeLotteryDialog()
     },
+    /**
+     * 結果画面を閉じる
+     */
     closeResultScreen () {
       this.resultScreen = false
       this.lotteryTitle = TITLE_LOTTERY
       this.stillChoosing = false
     },
-    initOverwriteDialog (item, details) {
+    /**
+     * 上書き確認ダイアログを初期化する
+     * @param {LTHistory} ltHistory LT実施履歴
+     * @param {object} details 上書きするデータ
+     */
+    initOverwriteDialog (ltHistory, details) {
       // 上書き処理を設定
       this.overwriteLTHistory = async () => {
         const data = {
           details: details
         }
-        await this.updateLTHistory(item, data)
+        await this.updateLTHistory(ltHistory, data)
         // 上書きが完了したらダイアログを全て閉じる
         this.closeOverwriteDialog()
-        this.closeChart()
+        this.closeLotteryDialog()
       }
     },
+    /**
+     * 上書き確認ダイアログを閉じる
+     */
     closeOverwriteDialog () {
       this.checkOverwriteDialog = false
       this.overwriteLTHistory = () => {}
     },
 
-    updateChartData (scoreList) {
-      // チャートのデータを更新する
+    /**
+     * チャートのデータを更新する
+     * @param {Array} scoreList スコアリスト
+     */
+    updateLotteryData (scoreList) {
       // chartDataを複製する
       const chartData = JSON.parse(JSON.stringify(this.chartData))
 
@@ -789,6 +844,9 @@ export default {
       // チャートのデータを更新
       this.chartData = chartData
     },
+    /**
+     * 抽選中のスコアをグラフに描写する
+     */
     async drawLots () {
       // データを初期化しておく
       this.initChartData()
@@ -821,11 +879,11 @@ export default {
           // 現在値が100未満で新しい値がMAX_SCORE以上の場合は選出者と見なす
           if (nowValue < MAX_SCORE && newValue >= MAX_SCORE) {
             targetList.push(scoreList[i].uid)
-            this.updateChartData(nowScoreList)
+            this.updateLotteryData(nowScoreList)
             if (targetList.length >= this.numOfPresenters) {
               // 選出者数分を選出したら終了する
               logger.debug(`targetList: ${printJson(targetList)}`)
-              this.updateChartData(nowScoreList)
+              this.updateLotteryData(nowScoreList)
 
               this.targetList = targetList
               // 結果画面を表示
@@ -834,15 +892,20 @@ export default {
             }
           }
 
-          this.updateChartData(nowScoreList)
+          this.updateLotteryData(nowScoreList)
           if (i % 3 === 0) {
+            // 3人ずつ描写するよう1秒待機を入れる
             await sleep(1000)
           }
         }
       }
     },
+    /**
+     * スコアを計算する
+     * @param {Array} ユーザーデータのリスト
+     * @returns スコアリスト
+     */
     calculateScore (userDataList) {
-      // スコアを計算する
       var scoreList = []
 
       // スコアを計算する
@@ -914,6 +977,12 @@ export default {
 
       return scoreList
     },
+    /**
+     * 最古のDateを取得する
+     * @param {Array} list Dateリスト
+     * @param {String} key キー名
+     * @returns 最古のDate
+     */
     getMinDateData (list, key) {
       if (list.length === 0) {
         return null
@@ -933,6 +1002,12 @@ export default {
         }
       })
     },
+    /**
+     * 最近のDateを取得する
+     * @param {Array} list Dateリスト
+     * @param {String} key キー名
+     * @returns 最近のDate
+     */
     getMaxDateData (list, key) {
       if (list.length === 0) {
         return null
@@ -953,39 +1028,66 @@ export default {
       })
     },
 
-    async save (item) {
+    /**
+     * LT履歴を保存する
+     * @param {LTHistory} ltHistory LT履歴
+     */
+    async saveLTHistory (ltHistory) {
       const data = {
-        date: item.date,
-        index: item.index,
-        details: item.details,
-        editing: item.editing
+        date: ltHistory.date,
+        index: ltHistory.index,
+        details: ltHistory.details,
+        editing: ltHistory.editing
       }
 
-      await this.updateLTHistory(item, data)
+      await this.updateLTHistory(ltHistory, data)
     },
-    isDisabledEditDialog (param) {
-      if (param === null) {
+
+    /**
+     * LT履歴が他のユーザーによって編集中かどうかを返す
+     * @param {object} uidEditing 編集中のユーザーのuid
+     * @returns LT履歴が他のユーザーによって編集中かどうか
+     */
+    isDisabledEditDialog (uidEditing) {
+      if (uidEditing === null) {
         return false
       }
 
-      return param !== this.$store.state.user.uid
+      return uidEditing !== this.$store.state.user.uid
     },
-
-    async operateEditDialog (item, editing) {
+    /**
+     * LT履歴編集ダイアログの操作状況を更新する
+     * @param {LTHistory} ltHistory LT履歴
+     * @param {object} editing 編集状況データ
+     */
+    async operateEditDialog (ltHistory, editing) {
       this.myOperation = true
-      var data = this.createEditingData(item, editing)
+      var data = this.createEditingData(ltHistory, editing)
 
-      await item.update(data)
+      await ltHistory.update(data)
     },
-    async operateDetailsEditDialog (item, index, key, value) {
-      var details = item.editing.details.concat()
+    /**
+     * LT履歴編集ダイアログの操作状況を更新する
+     * @param {LTHistory} ltHistory LT履歴
+     * @param {number} index LT履歴リストのindex
+     * @param {string} key 編集中のフィールド名
+     * @param {*} value 更新する値
+     */
+    async operateDetailsEditDialog (ltHistory, index, key, value) {
+      var details = ltHistory.editing.details.concat()
       details[index][key] = value
-      await this.operateEditDialog(item, {
+      await this.operateEditDialog(ltHistory, {
         details: details
       })
     },
-    createEditingData (item, editing) {
-      var data = JSON.parse(JSON.stringify(item.editing))
+    /**
+     * 編集状況データからLTHistory更新用データを作成する
+     * @param {LTHistory} ltHistory LT履歴
+     * @param {object} editing 編集状況データ
+     * @returns 編集状況データ
+     */
+    createEditingData (ltHistory, editing) {
+      var data = JSON.parse(JSON.stringify(ltHistory.editing))
       if (data) {
         Object.assign(data, editing)
         data = {
@@ -1003,11 +1105,17 @@ export default {
       return data
     },
 
+    /**
+     * 右クリックメニューを開く
+     */
     openMenu (event, item) {
       this.selectLTHistory = item.item
       this.$refs.ctxMenu.open()
     },
 
+    /**
+     * LT履歴を追加する
+     */
     async addLTHistory ({index = null, date = null, details = []}) {
       this.loadingDialog.open()
       this.loading = true
@@ -1026,14 +1134,23 @@ export default {
       this.loading = false
       this.loadingDialog.close()
     },
+    /**
+     * 選択したLT履歴の上に追加する
+     */
     async insertOnLTHistory () {
       const index = this.selectLTHistory.index
       await this.addLTHistory({index: index})
     },
+    /**
+     * 選択したLT履歴の下に追加する
+     */
     async insertBelowLTHistory () {
       const index = this.selectLTHistory.index + 1
       await this.addLTHistory({index: index})
     },
+    /**
+     * LT履歴を更新する
+     */
     async updateLTHistory (item, data) {
       this.loadingDialog.open()
       this.loading = true
@@ -1047,6 +1164,9 @@ export default {
       this.loading = false
       this.loadingDialog.close()
     },
+    /**
+     * LT履歴を削除する
+     */
     async deleteLTHistory () {
       this.loadingDialog.open()
       this.loading = true

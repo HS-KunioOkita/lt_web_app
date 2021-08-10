@@ -146,8 +146,8 @@ export const calculateDay = (date1, date2) => {
 /**
  * 配列を指定のKey順でソートする
  * @param {Array} arr 配列
- * @param {String} key キー
- * @param {String} orderby 昇順、降順オプション
+ * @param {string} key キー
+ * @param {string} orderby 昇順、降順オプション
  * @returns ソートした配列
  */
 const sortByKey = (arr, key, orderby = 'DESC') => {
@@ -182,8 +182,8 @@ const getIndexFromRankArray = (arr, id) => {
  * 指定したkeyの値で順位付けする
  * @param {Array} arr 配列
  * @param {*} id 唯一性のあるパラメーター
- * @param {String} key 順位づけするパラメーター
- * @param {String} orderby 昇順、降順オプション
+ * @param {string} key 順位づけするパラメーター
+ * @param {string} orderby 昇順、降順オプション
  * @returns 順位付けされた配列
  */
 const mapDataToRankingArrayWithSkip = (arr, id, key, orderby = 'DESC') => {
@@ -209,7 +209,7 @@ const mapDataToRankingArrayWithSkip = (arr, id, key, orderby = 'DESC') => {
  * 指定したkeyの値で順位づけし、ソートした配列を返す関数
  * @param {Array} arr ソートする配列
  * @param {*} id 唯一性のあるパラメーター
- * @param {String} key 順位づけするパラメーター
+ * @param {string} key 順位づけするパラメーター
  * @returns ソートし、順位を付与した配列
  */
 export const addRankingAllowSameRank = (arr, id, key) => {
@@ -288,7 +288,7 @@ export const compareDate = (date1, date2) => {
 
 /**
  * クラス名の文字列からエラークラスを取得する
- * @param {String} classname クラス名
+ * @param {string} classname クラス名
  * @returns エラークラス
  */
 export const getErrorClass = (classname) => {
@@ -297,7 +297,7 @@ export const getErrorClass = (classname) => {
 
 /**
  * 画面をリロードする
- * @param {Boolean} force 強制遷移させるかどうか
+ * @param {boolean} force 強制遷移させるかどうか
  */
 export const reload = (force = true) => {
   router.go({path: router.currentRoute.path, force: force})

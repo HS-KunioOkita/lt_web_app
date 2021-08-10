@@ -22,6 +22,10 @@ const firebaseConfig = {
   appId: '1:477369053538:web:46f912cf18106c5fb7fc3b',
   measurementId: 'G-S8D5S0GCJ2'
 }
+
+/**
+ * Firebase管理クラス
+ */
 class Firebase {
   constructor () {
     firebase.initializeApp(firebaseConfig)
@@ -37,6 +41,12 @@ class Firebase {
     this.storage = new Storage()
   }
 
+  /**
+   * メールアドレスとパスワードでログインする
+   * @param {string} email メールアドレス
+   * @param {string} password パスワード
+   * @returns ユーザーデータ
+   */
   async signInWithEmailAndPassword (email, password) {
     try {
       return await this.auth.signInWithEmailAndPassword(email, password)
@@ -55,6 +65,11 @@ class Firebase {
     }
   }
 
+  /**
+   * アクセストークンでログインする
+   * @param {string} token アクセストークン
+   * @returns ユーザーデータ
+   */
   async signInWithCustomToken (token) {
     try {
       return await this.auth.signInWithCustomToken(token)
@@ -69,20 +84,10 @@ class Firebase {
     }
   }
 
-  async createUserWithEmailAndPassword (email, password) {
-    try {
-      return await this.auth.createUserWithEmailAndPassword(email, password)
-    } catch (error) {
-      logger.warn(error)
-      switch (error.code) {
-        case WeekPasswordError.status:
-          throw new WeekPasswordError(error.message)
-        default:
-          throw new CommonError(error.message)
-      }
-    }
-  }
-
+  /**
+   * ログイン中ユーザーを取得する
+   * @returns ログイン中ユーザー
+   */
   currentUser () {
     try {
       return this.auth.currentUser
@@ -91,6 +96,12 @@ class Firebase {
     }
   }
 
+  /**
+   * パスワードを更新する
+   * @param {string} email メールアドレス
+   * @param {string} nowPassword 現在のパスワード
+   * @param {string} newPassword 新しいパスワード
+   */
   async updatePassword (email, nowPassword, newPassword) {
     try {
       const user = this.currentUser()
@@ -115,6 +126,9 @@ class Firebase {
     }
   }
 
+  /**
+   * ログアウト
+   */
   async signOut () {
     try {
       await this.auth.signOut()
@@ -125,6 +139,9 @@ class Firebase {
   }
 }
 
+/**
+ * Firestore管理クラス
+ */
 class Firestore {
   constructor () {
     this.db = firebase.firestore()
@@ -136,10 +153,22 @@ class Firestore {
     }
   }
 
+  /**
+   * 指定されたIDに該当するドキュメントを取得する
+   * @param {string} collection コレクション名
+   * @param {*} id ID
+   * @returns ドキュメント
+   */
   getDoc (collection, id) {
     return this.db.collection(collection).doc(id)
   }
 
+  /**
+   * ドキュメントのデータを辞書に整形して取得する
+   * @param {string} collection コレクション名
+   * @param {*} id ID
+   * @returns ドキュメントデータ
+   */
   async getDocData (collection, id) {
     try {
       const docData = await this.getDoc(collection, id).get()
@@ -161,6 +190,12 @@ class Firestore {
     }
   }
 
+  /**
+   * 条件に一致するドキュメントを全て取得する
+   * @param {string} collection コレクション名
+   * @param {Array} whereList 条件
+   * @returns ドキュメントのリスト
+   */
   getDocList (collection, whereList = []) {
     var col = this.db.collection(collection)
     for (var where of whereList) {
@@ -169,11 +204,21 @@ class Firestore {
     return col
   }
 
+  /**
+   * 全件検索する
+   * @param {string} collection コレクション名
+   */
   async getAllDocDataList (collection) {
     const docDataList = await this.getDocDataList(collection)
     return docDataList
   }
 
+  /**
+   * ドキュメントリストのデータを辞書に整形して取得する
+   * @param {string} collection コレクション名
+   * @param {*} whereList 条件
+   * @returns ドキュメントデータのリスト
+   */
   async getDocDataList (collection, whereList = []) {
     try {
       var col = this.getDocList(collection, whereList)
@@ -202,7 +247,7 @@ class Firestore {
 
   /**
    * ドキュメントを新規作成、更新する
-   * @param {string} collection コレクション
+   * @param {string} collection コレクション名
    * @param {object} document ドキュメントデータ
    * @param {number} id ID
    * @param {boolean} merge 既存データを更新するとき指定したデータのみ更新するかどうか。
@@ -262,6 +307,14 @@ class Firestore {
     }
   }
 
+  /**
+   * 昇順、または降順でドキュメントデータを並び替えて取得する
+   * @param {string} collection コレクション名
+   * @param {string} field 並べ替えるフィールド
+   * @param {boolean} isDesc 降順にするかどうか
+   * @param {number} limit 検索結果の最大取得数
+   * @returns ドキュメントデータのリスト
+   */
   async getDocDataListOrderBy (collection, field, isDesc = false, limit = 1) {
     const col = this.db.collection(collection)
     var query = null
@@ -297,12 +350,20 @@ class Firestore {
     return data_
   }
 
+  /**
+   * ドキュメントデータの変更を監視するスナップショットを登録する
+   * @param {*} monitoringTarget 監視するデータ
+   * @param {*} callbackFunc データに変更があった時に実行する処理
+   * @returns スナップショット
+   */
   onSnapshot (monitoringTarget, callbackFunc) {
     return monitoringTarget.onSnapshot((snapShot) => callbackFunc(snapShot))
   }
 
   /**
    * 新規作成データにデフォルトパラメータを付与する
+   * @param {string} collection コレクション名
+   * @param {*} id ID
    * @param {object} data 更新するデータ
    * @returns データ
    */
@@ -321,6 +382,8 @@ class Firestore {
 
   /**
    * 更新データにデフォルトパラメータを付与する
+   * @param {string} collection コレクション名
+   * @param {*} id ID
    * @param {object} data 更新するデータ
    * @returns データ
    */
@@ -335,6 +398,9 @@ class Firestore {
   }
 }
 
+/**
+ * Storage管理クラス
+ */
 class Storage {
   constructor () {
     this.storage = firebase.storage()
@@ -347,6 +413,11 @@ class Storage {
     }
   }
 
+  /**
+   * 画像のパスを取得する
+   * @param {String} imageUrl 画像のURL
+   * @returns src用の画像のパス
+   */
   async getImageSrc (imageUrl) {
     try {
       const ref = this.storage.ref().child(imageUrl)

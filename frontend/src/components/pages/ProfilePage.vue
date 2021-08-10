@@ -2,6 +2,7 @@
   <div>
     <h2 class="heading16">ユーザー設定</h2>
     <div class="contents">
+      <!-- プロフィール画面 -->
       <v-card>
         <v-card-title>
           <span class="text-h5">プロフィール</span>
@@ -37,6 +38,7 @@
         </v-card-actions>
       </v-card>
 
+      <!-- パスワード変更画面 -->
       <div class="card">
         <v-card>
           <v-card-title>
@@ -76,6 +78,7 @@
       </div>
     </div>
 
+    <!-- プロフィール編集ダイアログ -->
     <v-dialog
       v-model="profileDialog"
       max-width="500px"
@@ -130,6 +133,7 @@
       </v-card>
     </v-dialog>
 
+    <!-- パスワード更新確認ダイアログ -->
     <v-dialog
       v-model="passwordDialog"
       max-width="500px"
@@ -184,6 +188,9 @@ export default {
     this.initialize()
   },
   methods: {
+    /**
+     * 初期処理
+     */
     initialize () {
       this.editedItem = {
         name: ''
@@ -194,12 +201,18 @@ export default {
       }
     },
 
+    /**
+     * プロフィール編集ダイアログを開く
+     */
     openProfileDialog () {
       this.editedItem = {
         name: this.$store.state.user.name
       }
       this.profileDialog = true
     },
+    /**
+     * プロフィール編集内容を保存する
+     */
     async saveProfile () {
       this.loadingDialog.open()
 
@@ -210,13 +223,23 @@ export default {
       this.closeProfileDialog()
       this.loadingDialog.close()
     },
+    /**
+     * プロフィール編集ダイアログを閉じる
+     */
     closeProfileDialog () {
       this.profileDialog = false
       this.initialize()
     },
+
+    /**
+     * パスワード更新ダイアログを開く
+     */
     openPasswordDialog () {
       this.passwordDialog = true
     },
+    /**
+     * パスワードを更新する
+     */
     async savePassword () {
       this.loadingDialog.open()
 
@@ -247,6 +270,9 @@ export default {
 
       this.loadingDialog.close()
     },
+    /**
+     * パスワード更新ダイアログを閉じる
+     */
     closePasswordDialog () {
       this.passwordDialog = false
       this.initialize()

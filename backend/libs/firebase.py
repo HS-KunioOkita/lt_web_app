@@ -22,6 +22,8 @@ firebase_admin.initialize_app(options={
 
 
 class FirebaseAdmin:
+    """Firebase管理クラス"""
+
     def __init__(self):
         self.db_client = firestore.client()
         if setting.env == 'dev' or setting.env == 'test':
@@ -38,6 +40,8 @@ class FirebaseAdmin:
 
     @staticmethod
     def create_token(uid, payload={}):
+        """アクセストークンを発行する"""
+
         try:
             return auth.create_custom_token(uid, payload)
         except Exception as e:
@@ -53,6 +57,8 @@ class FirebaseAdmin:
 
     @staticmethod
     def verify_token(token):
+        """アクセストークンを検証する"""
+
         try:
             return auth.verify_id_token(token)
         except Exception as e:
@@ -67,12 +73,16 @@ class FirebaseAdmin:
 
 
     def get_doc_list(self, collection, where_list=[]):
+        """Firestoreのドキュメントで、where_listに指定された条件に合うデータを取得する"""
+
         for where in where_list:
             collection = collection.where(*where)
         return collection.stream()
 
 
     def get_documents(self, collection, where_list=[]):
+        """取得したFirestoreのドキュメントを、idをkeyにして辞書型に整形する"""
+
         try:
             doc_list = self.get_doc_list(collection, where_list=where_list)
 
@@ -93,6 +103,8 @@ class FirebaseAdmin:
 
 
     def get_all_users(self):
+        """全ユーザーを取得する"""
+
         result = auth.list_users()
         documents = self.get_documents(self.user_db)
         user_list = []
@@ -105,6 +117,8 @@ class FirebaseAdmin:
         return user_list
 
     def get_user(self, uid):
+        """指定されたuidのユーザーを取得する"""
+
         try:
             user = auth.get_user(uid)
             profile = self.user_db.document(uid).get()
@@ -129,6 +143,8 @@ class FirebaseAdmin:
                     password,
                     name,
                     admin_flg=False):
+        """新規ユーザーを作成する"""
+
         try:
             user = auth.create_user(email=email,
                                     password=password)
@@ -154,6 +170,11 @@ class FirebaseAdmin:
             raise InternalServerError(payload=payload)
 
     def update_document(self, collection, id, document, merge=True):
+        """
+        Firestoreのドキュメントを更新する
+        - merge: Trueにすると、documentで指定されたパラメータのみ更新される
+        """
+
         try:
             update_profile = convert_keys_to_camel_case(document.copy())
             update_profile['updatedAt'] = get_now()
@@ -170,9 +191,13 @@ class FirebaseAdmin:
             raise InternalServerError(payload=payload)
 
     def update_user_profile(self, uid, profile):
+        """ユーザーのプロフィールを更新する"""
+
         self.update_document(self.user_db, uid, profile)
 
     def delete_document(self, collection, id):
+        """Firestoreのドキュメントを削除する"""
+
         try:
             collection.document(id).delete()
         except Exception as e:
@@ -186,5 +211,7 @@ class FirebaseAdmin:
             raise InternalServerError(payload=payload)
 
     def delete_user(self, uid):
+        """ユーザーを削除する"""
+
         auth.delete_user(uid)
         self.delete_document(self.user_db, uid)

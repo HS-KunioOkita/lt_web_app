@@ -12,10 +12,13 @@ class RegexConverter(BaseConverter):
 
 debug = setting.env == 'dev'
 
+# フロントエンドのビルド成果物のパス
 template_folder_path = '../frontend/dist'
 
 app = Flask(__name__, static_folder='{}/static'.format(template_folder_path), template_folder=template_folder_path)
+# JSON出力する際に文字化けさせない
 app.config['JSON_AS_ASCII'] = False
+# JSON出力する際にkey名でソートさせない
 app.config["JSON_SORT_KEYS"] = False
 
 app.url_map.converters['regex'] = RegexConverter

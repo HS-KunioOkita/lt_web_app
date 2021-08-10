@@ -8,27 +8,30 @@ from libs.error import CommonError, InternalServerError
 
 
 class RestfulApi(Api):
+    """APIのルーティング、リソースを管理するクラス"""
+
     def init(self):
 
         path = 'api/urls'
         if setting.env == 'prod':
+            # 本番環境はルートがlt_web_app/になるため調整
             path = 'backend/{}'.format(path)
 
         for p in pathlib.Path(path).glob('v*.py'):
             # APIのバージョンをファイル名から抽出
             api_ver = p.name.replace('.py', '')
 
+            # バージョンに対応するurlファイルをimport
             urls = import_module('api.urls.{}'.format(api_ver))
-            url_patterns = urls.url_patterns
-
-            for url_pattern in url_patterns:
-                a = url_pattern.values(api_ver)
-                # リソースを登録
-                self.add_resource(*a)
+            for url_pattern in urls.url_patterns:
+                resource = url_pattern.values(api_ver)
+                # リソースをflask_restful.Apiに登録
+                self.add_resource(*resource)
 
     def handle_error(self, e):
+        """エラーが発生した場合にキャッチするハンドラ"""
+
         if isinstance(e, CommonError):
-            print(e.to_dict())
             return jsonify(e.to_dict())
         else:
             # CommonErrorでcatchできないエラーを補足する
@@ -37,7 +40,6 @@ class RestfulApi(Api):
                 'message': str(e),
             }
             error_info = InternalServerError(payload=payload).to_dict()
-            print(error_info)
             return jsonify(error_info)
 
 
@@ -63,6 +65,11 @@ class UrlPattern:
 
     @classmethod
     def url(cls, name, **pass_params):
+        """
+        登録したAPIのURLを登録名で取得する
+        - pass_params: パスパラメータを渡せる
+        """
+
         assert name in UrlPattern.__urls.keys()
         url = UrlPattern.__urls[name]
 
