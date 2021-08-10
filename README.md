@@ -1,19 +1,21 @@
-# lt_web_app
+# LT Web App
 
-> web app for LT.
+> Web app for LT.
 
 
 ## Backend Setup
 
 バックエンドのFirebaseの環境設定を実施する
-1. 下記から新しい秘密鍵を生成する
+1. 下記から新しい秘密鍵を生成する<br>
 https://console.firebase.google.com/u/1/project/h-develop2/settings/serviceaccounts/adminsdk?hl=ja
 2. backend/secret/ 配下にJSONファイルを配置する
 3. 初期設定スクリプトを実行する
 ``` bash
 cd backend/
 ./init.sh <JSONファイルのパス>
-# Ex.) ./init.sh secret/h-develop2-firebase-adminsdk-hbh6m-c3e2782116.json
+
+# Ex.)
+./init.sh secret/h-develop2-firebase-adminsdk-hbh6m-c3e2782116.json
 ```
 
 
