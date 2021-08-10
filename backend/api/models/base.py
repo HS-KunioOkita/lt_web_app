@@ -6,6 +6,8 @@ private_pattern = re.compile('^(_)')
 
 
 def require_client(f):
+    """clientが設定されているかどうか確認する"""
+
     @functools.wraps(f)
     def _wrap(*args, **kwargs):
         self = args[0]
@@ -37,11 +39,15 @@ class ModelBase:
         self._client.delete_document(id)
 
     def set_params(self, **params):
+        """インスタンス変数に値を設定する"""
+
         for key, value in params.items():
             if key in self.to_dict():
                 setattr(self, key, value)
 
     def to_dict(self, convert_datetime=False):
+        """publicなインスタンス変数を辞書に整形する"""
+
         params = {
             key: value for key, value in self.__dict__.items()
             if not re.match(private_pattern, key)

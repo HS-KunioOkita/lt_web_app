@@ -23,6 +23,7 @@
           />
           <v-card-actions>
             <v-btn class="info" @click="login">ログイン</v-btn>
+            <!-- 開発環境の場合はテストアカウント作成ボタンを用意 -->
             <v-btn
               v-if="isDev"
               class="info"
@@ -35,7 +36,9 @@
       </v-card>
     </div>
 
+    <!-- テストアカウント作成ダイアログ -->
     <v-dialog
+      v-if="isDev"
       v-model="dialog"
       max-width="500px"
       persistent
@@ -138,6 +141,9 @@ export default {
   },
 
   methods: {
+    /**
+     * ログイン処理
+     */
     async login () {
       this.loadingDialog.open()
 
@@ -165,8 +171,11 @@ export default {
       }
     },
 
+    // ------------デバッグ用メソッド------------ //
     async createTestUser () {
-      this.open()
+      if (this.isDev) {
+        this.open()
+      }
     },
     open () {
       this.dialog = true
@@ -203,6 +212,7 @@ export default {
       }
     }
   },
+
   mounted () {
     if (this.$store.state.accessToken) {
       // アクセストークンがある状態でログイン画面にきたらTopページに遷移させる

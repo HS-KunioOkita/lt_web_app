@@ -12,23 +12,42 @@ const BASE_HEADER = {
   'Bearer': ''
 }
 
+/**
+ * リクエストのHeaderを作成する
+ * @param {string} token トークン
+ * @returns Header
+ */
 const createHeader = (token) => {
+  // BASE_HEADERのコピーを作成する
   var header = JSON.parse(JSON.stringify(BASE_HEADER))
   header['Bearer'] = token
 
   return header
 }
 
+/**
+ * APIのフルパスを作成する
+ * @param {string} url APIのURL
+ * @returns フルパス
+ */
 const getPath = (url) => {
   var path = `${BASE_URL}${url}`
   switch (setting.env) {
     case ENV.dev:
+      // 開発環境はconfig/index.jsのproxyTableで設定しているため、URLをそのまま渡す
       path = url
   }
 
   return path
 }
 
+/**
+ * GETリクエストを送信
+ * @param {string} url APIのURL
+ * @param {string} token トークン
+ * @param {object} params クエリパラメータ
+ * @returns レスポンス
+ */
 export const getRequest = async (url, token, params = {}) => {
   var result = null
   try {
@@ -53,6 +72,13 @@ export const getRequest = async (url, token, params = {}) => {
   return result
 }
 
+/**
+ * POSTリクエストを送信
+ * @param {string} url APIのURL
+ * @param {string} token トークン
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const postRequest = async (url, token, data) => {
   var result = null
   try {
@@ -76,6 +102,13 @@ export const postRequest = async (url, token, data) => {
   return result
 }
 
+/**
+ * PUTリクエストを送信
+ * @param {string} url APIのURL
+ * @param {string} token トークン
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const putRequest = async (url, token, data) => {
   var result = null
   try {
@@ -99,6 +132,13 @@ export const putRequest = async (url, token, data) => {
   return result
 }
 
+/**
+ * DELETEリクエストを送信
+ * @param {string} url APIのURL
+ * @param {string} token トークン
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const deleteRequest = async (url, token, data) => {
   var result = null
   try {
@@ -123,6 +163,10 @@ export const deleteRequest = async (url, token, data) => {
   return result
 }
 
+/**
+ * ログイン中のユーザーのIDトークンを取得する
+ * @returns IDトークン
+ */
 const getToken = async () => {
   try {
     const user = firebase.currentUser()
@@ -133,6 +177,12 @@ const getToken = async () => {
   }
 }
 
+/**
+ * UserデータをGETする
+ * @param {string} url APIのURL
+ * @param {object} params クエリパラメータ
+ * @returns レスポンス
+ */
 export const getUserRequest = async (url, params = {}) => {
   try {
     const token = await getToken()
@@ -143,6 +193,12 @@ export const getUserRequest = async (url, params = {}) => {
   }
 }
 
+/**
+ * UserデータをPOSTする
+ * @param {string} url APIのURL
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const postUserRequest = async (url, data) => {
   try {
     const token = await getToken()
@@ -153,6 +209,12 @@ export const postUserRequest = async (url, data) => {
   }
 }
 
+/**
+ * UserデータをPUTする
+ * @param {string} url APIのURL
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const putUserRequest = async (url, data) => {
   try {
     const token = await getToken()
@@ -163,6 +225,12 @@ export const putUserRequest = async (url, data) => {
   }
 }
 
+/**
+ * UserデータをDELETEする
+ * @param {string} url APIのURL
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const deleteUserRequest = async (url, data = {}) => {
   try {
     const token = await getToken()
@@ -173,6 +241,12 @@ export const deleteUserRequest = async (url, data = {}) => {
   }
 }
 
+/**
+ * デバッグ用POST API
+ * @param {string} url APIのURL
+ * @param {object} data リクエストデータ
+ * @returns レスポンス
+ */
 export const debugPostRequest = async (url, data) => {
   if (setting.env === ENV.prod) {
     throw new Error()
