@@ -5,7 +5,6 @@ import {
   TooManyRequestsError,
   InvalidCustomTokenError,
   UserNotFoundError,
-  WeekPasswordError,
   InvalidEmailError,
   RequiresRecentLoginError,
   FirestoreAbortedError
