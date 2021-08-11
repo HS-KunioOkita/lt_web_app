@@ -18,7 +18,7 @@ cd backend/
 ./init.sh secret/h-develop2-firebase-adminsdk-hbh6m-c3e2782116.json
 ```
 
-## Frontend Deploy
+## Frontend Setup
 
 ``` bash
 cd frontend/
