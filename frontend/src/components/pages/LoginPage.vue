@@ -8,7 +8,7 @@
         <v-card-text>
           <v-text-field
             prepend-icon="mdi-account-circle"
-            label="ユーザ名"
+            label="Email"
             v-model="user.email"
             @keydown.enter="login"
           />
