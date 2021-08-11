@@ -595,7 +595,7 @@ export default {
       this.numOfPresenters = this.$store.state.ltSettings.numOfPresenters
     },
     initImplementationLTDate () {
-      this.implementationLTDate = getDay(DAY.FRIDAY)
+      this.implementationLTDate = getDay(DAY.FRIDAY, 1)
     },
     /**
      * グラフ初期処理
