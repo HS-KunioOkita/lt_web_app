@@ -750,7 +750,7 @@ export default {
 
       // 指定された実施日時に該当する履歴を検索する
       var history = this.allLTHistory.filter((x) => {
-        return compareDate(x.date, this.implementationLTDate)
+        return isDate(x.date) && compareDate(x.date, this.implementationLTDate)
       })
       // 詳細を生成
       var details = []
