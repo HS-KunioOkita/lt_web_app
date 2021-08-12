@@ -398,8 +398,11 @@ export default {
   mounted () {
     // LT実施履歴の並び替えを実装
     this.$nextTick(function () {
+      // LT実施履歴のテーブルボディを取得
       let table = document.querySelector('.implementationHistory.v-data-table tbody')
       const self = this
+
+      // LT実施履歴を並び替え可能にする
       Sortable.create(table, {
         async onEnd ({ newIndex, oldIndex }) {
           if (newIndex === oldIndex) {
@@ -409,17 +412,30 @@ export default {
 
           self.loadingDialog.open()
 
-          // ドラッグした履歴
-          const item1 = self.allLTHistory.find(x => x.index === oldIndex)
-          // ドロップした先の履歴
-          const item2 = self.allLTHistory.find(x => x.index === newIndex)
+          // 現在位置より上に移動したかどうか
+          const isUp = newIndex < oldIndex
 
-          // indexを入れ替え
-          await item1.update({
-            index: newIndex
+          // ドラッグした履歴
+          const item = self.allLTHistory.find(x => x.index === oldIndex)
+          // ドラッグしたことによって位置がズレる履歴を抽出する
+          const itemList = self.allLTHistory.filter(x => {
+            if (isUp) {
+              return x.index >= newIndex && x.index < oldIndex
+            } else {
+              return x.index > oldIndex && x.index <= newIndex
+            }
           })
-          await item2.update({
-            index: oldIndex
+
+          // 移動した分他のデータをずらす
+          for (var item_ of itemList) {
+            item_.update({
+              index: item_.index + (isUp ? 1 : -1)
+            })
+          }
+          // indexを更新
+          // self.loadingDialog.open()の処理が完了する前にclose()が呼ばれエラー発生するためawait
+          await item.update({
+            index: newIndex
           })
 
           self.loadingDialog.close()
