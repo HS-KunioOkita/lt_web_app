@@ -8,6 +8,8 @@ frontend/test/unit/coverage/
 frontend/test/e2e/reports/
 frontend/selenium-debug.log
 
+frontend/emulator/firebase/config/
+
 backend/secret/*
 !backend/secret/.gitkeep
 
