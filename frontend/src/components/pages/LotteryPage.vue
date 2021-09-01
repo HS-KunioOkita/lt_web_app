@@ -648,6 +648,7 @@ export default {
           // 画面遷移後の初期設定が終わった後にしか反映しない
 
           await this.initAllLTHistory()
+          await this.initUserDataList()
           this.initImplementationLTDate()
           this.initChartData()
 

@@ -1,52 +1,150 @@
 <template>
   <div class="contents">
     <h2 class="heading16">ドキュメント</h2>
-    <div class="document">
-      <div class="sideMenu">
-        <AccordionList
-          :item="documentList"
-          keyName="name"
-          :onClick="selectItem"
-        />
-      </div>
-      <div class="documentContents">
-        <v-btn
-          v-if="!editing"
-          class="info"
-          @click="editPage"
+      <div class="document">
+        <div
+          class="sideMenu"
         >
-          編集
-        </v-btn>
-        <v-btn
-          v-else
-          class="info"
-          @click="savePage"
-        >
-          保存
-        </v-btn>
-        <div class="documentResource">
-          <div
-            v-if="!editing"
-            class="markdown-body"
-          >
-            <div v-html="md.render(htmlResource.resource)" />
-          </div>
-          <mavon-editor
-            v-else
-            v-model="editedHtml"
-            language="ja"
-            placeholder="編集エリア"
-            class="editor"
+          <AccordionList
+            :item="documentList"
+            keyName="id"
+            sortKey="name"
+            :onClick="selectItem"
           />
+        </div>
+        <div class="documentContents">
+          <v-btn
+            class="info"
+            @click="createNewPage"
+          >
+            新規ページ作成
+          </v-btn>
+          <v-btn
+            v-if="htmlResource.id !== null"
+            class="info"
+            @click="editPage"
+          >
+            編集
+          </v-btn>
+          <v-btn
+            v-if="htmlResource.id !== null"
+            class="info"
+            @click="deletePage"
+          >
+            削除
+          </v-btn>
+          <div class="documentResource">
+            <div
+              v-if="htmlResource.id !== null"
+              class="pageName"
+            >
+              {{ htmlResource.path }}
+            </div>
+            <div
+              class="markdown-body detail"
+            >
+              <div v-html="md.render(htmlResource.resource)" />
+            </div>
         </div>
       </div>
     </div>
+
+    <!-- ドキュメント編集ダイアログ -->
+    <v-dialog
+      v-model="editPageDialog"
+      width="1000px"
+      persistent
+    >
+      <v-card>
+        <v-card-title>
+          <div>編集</div>
+        </v-card-title>
+        <ValidationObserver v-slot="{ invalid }" immediate>
+          <v-card-text>
+            <v-container>
+              <span class="selectParentLabel">親ページ</span>
+              <v-select
+                class="selectParent"
+                v-model="parentId"
+                :items="documentListForList"
+                item-text="path"
+                item-value="id"
+                single-line
+              />
+              <TextField
+                v-model="name"
+                name="name"
+                label="タイトル"
+                rules="required|documentTitle"
+              />
+              <mavon-editor
+                v-model="editedHtml"
+                :externalLink="mavonEditor.externalLink"
+                language="ja"
+                placeholder="編集エリア"
+                class="editor"
+              />
+            </v-container>
+          </v-card-text>
+
+          <v-card-actions>
+            <div class="resultButtons">
+              <v-btn color="info darken-1" text @click="closeEditPageDialog">Cancel</v-btn>
+              <v-btn
+                color="info darken-1"
+                text
+                @click="savePage"
+                :disabled="invalid"
+              >
+                Save
+              </v-btn>
+            </div>
+          </v-card-actions>
+        </ValidationObserver>
+      </v-card>
+    </v-dialog>
+
+    <!-- 子ページ削除確認ダイアログ -->
+    <v-dialog
+      v-model="deletePageDialog"
+      width="300px"
+      persistent
+    >
+      <v-card>
+        <v-card-title>
+          <div>確認</div>
+        </v-card-title>
+
+        <v-card-text>
+          <v-container>
+            <div>下記子ページも削除されます。削除しますか？</div>
+            <AccordionList
+              :item="subDocumentList"
+              keyName="id"
+              sortKey="name"
+            />
+          </v-container>
+        </v-card-text>
+
+        <v-card-actions>
+            <div class="resultButtons">
+              <v-btn color="info darken-1" text @click="closeDeletePageDialog">Cancel</v-btn>
+              <v-btn
+                color="info darken-1"
+                text
+                @click="deletePageWithSubAsync"
+              >
+                Save
+              </v-btn>
+            </div>
+          </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
 import { DocumentResource } from '@/models/DocumentResource'
-import Router from '@/router/index.js'
 
 export default {
   data () {
@@ -54,165 +152,355 @@ export default {
       htmlResources: {},
       pageId: '',
       htmlResource: {
-        id: '',
+        id: null,
         name: '',
         resource: ''
       },
       documentList: [],
+      subDocumentList: [],
+      documentListForList: [],
+      editPageDialog: false,
+      deletePageDialog: false,
+      name: '',
+      parentId: null,
 
       editing: false,
-      init: {
-        height: 800,
-        menubar: false,
-        remove_linebreaks: false,
-        table_toolbar: [
-          'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol'
-        ],
-        plugins: [
-          'print preview importcss searchreplace autolink autosave save directionality visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern noneditable help charmap quickbars emoticons'
-        ],
-        toolbar: [
-          'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help table'
-        ]
-      },
-      editedHtml: ''
+      newHtml: '',
+      editedHtml: '',
+
+      mavonEditor: {
+        externalLink: {
+          markdown_css: function () {
+            return '/static/css/markdown/github-markdown.min.css'
+          },
+          hljs_js: function () {
+            return '/static/js/highlightjs/highlight.min.js'
+          },
+          katex_css: function () {
+            return '/static/css/katex/katex.min.css'
+          },
+          katex_js: function () {
+            return '/static/js/katex/katex.min.js'
+          }
+        }
+      }
     }
   },
 
   created () {
+    window.onhashchange = this.initOnHashChange
     this.initialize()
   },
 
   methods: {
-    async initialize () {
-      // ドキュメントのリソースを取得
-      // const resources = await DocumentResource.getAllResource()
-      const resources = [
-        {
-          id: 'id1',
-          name: 'test1',
-          resource: '- heading'
-        },
-        {
-          id: 'id2',
-          name: 'test2',
-          resource: '## heading',
-          sub: [
-            {
-              id: 'id2-1',
-              name: 'test2-1',
-              resource: '### heading',
-              sub: [
-                {
-                  id: 'id2-1-1',
-                  name: 'test2-1-1',
-                  resource: 'test'
-                }
-              ]
-            }
-          ]
-        }
-      ]
+    initOnHashChange () {
+      // URLにページIDが指定されているときは自動表示する
+      const pageId = window.location.hash.replace('#', '')
 
-      var documentList = []
-
-      for (var resource of resources) {
-        // console.log(resource)
-        documentList.push({
-          id: resource.id,
-          name: resource.name,
-          sub: resource.sub
-        })
-
-        this.htmlResources[resource.id] = {
-          name: resource.name,
-          resource: resource.resource
-        }
+      const resource = this.htmlResources[pageId]
+      if (!pageId || resource === undefined) {
+        this.initHtmlResource()
+        return
       }
 
+      this.htmlResource = resource
+    },
+    initResource () {
+      this.name = ''
+      this.editedHtml = ''
+      this.parentId = null
+    },
+    initHtmlResource () {
+      this.htmlResource = {
+        id: null,
+        name: '',
+        resource: ''
+      }
+    },
+    /**
+     * 初期処理
+     */
+    async initialize () {
+      // ドキュメントのリソースを取得
+      const resources = await DocumentResource.getAllResource()
+
+      var documentListForList = [{
+        id: null,
+        path: ''
+      }]
+      var documentList = []
+      var subDocumentList = []
+
+      for (var resource of resources) {
+        if (resource.parentId === null) {
+          documentList.push(resource)
+        } else {
+          subDocumentList.push(resource)
+        }
+
+        this.htmlResources[resource.id] = resource
+      }
+
+      // 親ページがあるドキュメントは親に設定する
+      this.createDocumentList(documentList, subDocumentList)
+
+      // ページのフルパスを保持したリストを作成
+      for (resource of resources) {
+        const path = this.createPath(resource)
+        documentListForList.push({
+          path: path,
+          ...resource
+        })
+
+        this.htmlResources[resource.id].path = path
+      }
+
+      this.documentListForList = documentListForList
       this.documentList = documentList
+
+      this.initOnHashChange()
+    },
+    /**
+     * ページのパスを生成する
+     * @param {DocumentResource} resource resource
+     * @returns パス
+     */
+    createPath (resource) {
+      if (resource.parentId === null) {
+        return resource.name
+      }
+
+      var parent = this.htmlResources[resource.parentId]
+      var path = this.createPath(parent)
+      path = path + '/' + resource.name
+
+      return path
+    },
+    createDocumentList (documentList, subDocumentList) {
+      for (var document of documentList) {
+        var subList = subDocumentList.filter(x => {
+          return x.parentId === document.id
+        })
+        if (subList.length > 0) {
+          document.sub = subList
+          this.createDocumentList(document.sub, subDocumentList)
+        }
+      }
     },
 
-    openEditPage () {
-      // 編集ページに遷移
-      Router.push({
-        name: 'EditorPage',
-        params: {
-          pageId: this.pageId,
-          html: this.html
+    /**
+     * 目次をクリックしたときに走る処理
+     * @param {DocumentResource} item item
+     */
+    selectItem (item) {
+      this.htmlResource = this.htmlResources[item.id]
+      // フラグメント識別子を設定
+      window.location.hash = item.id
+    },
+
+    /**
+     * 新規ページを作成する
+     */
+    createNewPage () {
+      this.parentId = this.htmlResource.id
+      this.openEditPageDialog()
+    },
+
+    /**
+     * ページを削除する
+     */
+    deletePage () {
+      // 子ページがある場合は保持しておく
+      var hasSub = this.htmlResource.sub !== undefined
+      if (hasSub) {
+        this.subDocumentList = this.htmlResource.sub
+      }
+
+      // 確認ダイアログを表示
+      this.$modalDialog({
+        title: '確認',
+        message: `「${this.htmlResource.name}」を削除しますか?`,
+        ok: async () => {
+          if (hasSub) {
+            this.openDeletePageDialog()
+          } else {
+            await this.deletePageAsync(async () => {
+              await this.htmlResource.delete()
+            })
+          }
         }
       })
     },
+    /**
+     * ページを削除する一連の処理
+     * @param {function} func 削除処理
+     */
+    async deletePageAsync (func) {
+      try {
+        this.loadingDialog.open()
+        await func()
 
+        this.initResource()
+        this.initHtmlResource()
+        window.location.hash = ''
+        // データ読み込み
+        await this.initialize()
+      } catch (error) {
+        this.$errorDialog({
+          error: error.class
+        })
+      } finally {
+        this.loadingDialog.close()
+      }
+    },
+    /**
+     * 子ページを含めたページを削除する一連の処理
+     */
+    async deletePageWithSubAsync () {
+      await this.deletePageAsync(async () => {
+        await this.deleteAllSub(this.htmlResource.sub)
+        await this.htmlResource.delete()
+      })
+
+      this.closeDeletePageDialog()
+    },
+    /**
+     * 子ページを全て削除する
+     */
+    async deleteAllSub (item) {
+      for (var sub of item) {
+        await sub.delete()
+        if (sub.sub !== undefined) {
+          await this.deleteAllSub(sub.sub)
+        }
+      }
+    },
+
+    openDeletePageDialog () {
+      this.deletePageDialog = true
+    },
+    closeDeletePageDialog () {
+      this.deletePageDialog = false
+    },
+
+    /**
+     * ページを編集する
+     */
     editPage () {
       this.editing = true
       this.editedHtml = this.htmlResource.resource
+      this.name = this.htmlResource.name
+      this.parentId = this.htmlResource.parentId
+      this.openEditPageDialog()
     },
 
-    savePage () {
-      // console.log(this.editedHtml)
-      this.htmlResource.resource = this.editedHtml
+    openEditPageDialog () {
+      this.editPageDialog = true
+    },
+    closeEditPageDialog () {
       this.editing = false
+      this.initResource()
 
-      console.log(this.md.render(this.editedHtml))
+      this.editPageDialog = false
     },
 
-    selectItem (item) {
-      this.htmlResource = this.htmlResources[item.id]
+    /**
+     * 新規作成 or 編集したページを保存する
+     */
+    async savePage () {
+      try {
+        this.loadingDialog.open()
+
+        var pageId = ''
+        if (this.editing) {
+          await this.htmlResource.update({
+            name: this.name,
+            resource: this.editedHtml,
+            parentId: this.parentId
+          })
+          pageId = this.htmlResource.id
+        } else {
+          const newPage = await DocumentResource.create(this.name, this.editedHtml, this.parentId)
+          pageId = newPage.id
+        }
+
+        // データ読み込み
+        window.location.hash = pageId
+        this.initHtmlResource()
+        await this.initialize()
+      } catch (error) {
+        this.$errorDialog({
+          error: error.class
+        })
+      } finally {
+        this.name = ''
+        this.editedHtml = ''
+        this.closeEditPageDialog()
+        this.loadingDialog.close()
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-  html, body{
-    height: 100%;
-  }
-
   .contents {
+    position: relative;
     padding: 20px auto;
     height: calc(100% - 64px);
   }
 
+  .pageName {
+    font-size: 30px;
+    border-bottom: solid 3px rgb(201, 201, 201);
+  }
+
   .document {
+    position: relative;
     height: 100%;
     display: flex;
     align-items: center;
   }
 
   .documentContents {
+    position: relative;
     width: calc(100% - 250px);
     height: 100%;
+    padding: 0px 10px;
   }
 
   .documentResource {
+    position: relative;
     width: 100%;
     height: 100%;
     overflow-y: scroll;
     padding: 10px;
   }
 
+  .detail {
+    position: relative;
+    padding: 20px 10px 10px;
+  }
+
   .editor {
+    position: relative;
     width: 100%;
-    height: 100%;
+    height: 800px;
   }
 
   .sideMenu {
+    position: relative;
     width: 250px;
     height: 100%;
     background-color: #c4ffb5;
     overflow-y: scroll;
     padding: 10px;
   }
-</style>
 
-<style>
-  #article, .mce-tinymce,.mce-stack-layout, .mce-edit-area{
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+  .selectParentLabel {
+    font-size: 12px;
   }
-   .mce-tinymce iframe{
-    flex: 1;
+  .selectParent {
+    margin-top: -10px;
   }
 </style>

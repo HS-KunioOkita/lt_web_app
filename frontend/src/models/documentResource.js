@@ -11,6 +11,7 @@ export class DocumentResource extends ModelBase {
     super()
 
     this.id = null
+    this.parentId = null
     this.name = null
     this.resource = null
     this.createUser = null
@@ -38,14 +39,16 @@ export class DocumentResource extends ModelBase {
    * リソースを新規作成する
    * @param {String} name ページ名
    * @param {String} resource ページのHTMLリソース
+   * @param {String} parentId 親ページID
    * @param {Boolean} editing ページが編集中かどうか
    * @returns DocumentResourceモデル
    */
-  static async create (name, resource, editing = false) {
+  static async create (name, resource, parentId = null, editing = false) {
     const data = {
+      parentId: parentId,
       name: name,
       resource: resource,
-      createUser: Store.state.user.id,
+      createUser: Store.state.user.uid,
       editing: editing
     }
     const documentResourceData = await firebase.db.setDoc(documentResourceCollection, data)
@@ -58,7 +61,7 @@ export class DocumentResource extends ModelBase {
    * @param {object} data 更新するデータ
    */
   async update (data) {
-    data.updateUser = Store.state.user.id
+    data.updateUser = Store.state.user.uid
     await firebase.db.setDoc(documentResourceCollection, data, this.id)
 
     this.updateParams(data)

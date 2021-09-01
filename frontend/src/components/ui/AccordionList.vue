@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-for="v in item"
+      v-for="v in source"
       :key="v[keyName]"
     >
       <template v-if="v.sub === undefined">
@@ -11,18 +11,25 @@
           >
             mdi-circle-small
           </v-icon>
-          <div @click="onClick(v)">{{ v.name }}</div>
+          <div
+            :class="className"
+            @click="onClickFunction(v)"
+          >
+            {{ v.name }}
+          </div>
         </div>
       </template>
       <template v-else>
         <AccordionMenu
           :title="v.name"
-          :onClick="onClick.bind(this, v)"
+          :onClick="onClickFunction.bind(this, v)"
+          :class="className"
         >
           <AccordionList
             :item="v.sub"
-            keyName="name"
+            :keyName="keyName"
             :onClick="onClick"
+            :sortKey="sortKey"
           />
         </AccordionMenu>
       </template>
@@ -39,6 +46,9 @@ export default {
     keyName: {
       type: String
     },
+    sortKey: {
+      type: String
+    },
     onClick: {
       type: Function
     }
@@ -46,8 +56,17 @@ export default {
 
   data () {
     return {
+      source: [],
       active: false,
-      icon: 'mdi-chevron-right'
+      icon: 'mdi-chevron-right',
+      className: '',
+      onClickFunction: () => {}
+    }
+  },
+
+  watch: {
+    item: function (newValue, oldValue) {
+      this.initItem(newValue)
     }
   },
 
@@ -57,6 +76,23 @@ export default {
 
   methods: {
     initialize () {
+      const hasOnClick = this.onClick !== undefined
+      this.className = hasOnClick ? 'name' : ''
+      if (hasOnClick) {
+        this.onClickFunction = this.onClick
+      }
+
+      this.initItem(this.item)
+    },
+    initItem (value) {
+      this.source = value.concat()
+
+      const sortKey = this.sortKey
+      if (sortKey !== undefined) {
+        this.source.sort((a, b) => {
+          return a[sortKey] > b[sortKey] ? 1 : -1
+        })
+      }
     }
   }
 }
@@ -66,5 +102,9 @@ export default {
   .icon {
     display: flex;
     align-items: center;
+  }
+
+  .name {
+    cursor: pointer;
   }
 </style>

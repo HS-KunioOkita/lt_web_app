@@ -21,6 +21,7 @@ import SlideUpDown from 'vue-slide-up-down'
 import AccordionMenu from '@/components/ui/AccordionMenu'
 import AccordionList from '@/components/ui/AccordionList'
 import NumberField from '@/components/ui/NumberField'
+import TextField from '@/components/ui/TextField'
 import EmailField from '@/components/ui/EmailField'
 import PasswordField from '@/components/ui/PasswordField'
 import DatePicker from '@/components/ui/DatePicker'
@@ -40,6 +41,10 @@ import mixins from '@/libs/mixins/mixins'
 import '@/css/common.css'
 import mavonEditor from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
+import 'mavon-editor/dist/markdown/github-markdown.min.css'
+import 'mavon-editor/dist/highlightjs/highlight.min.js'
+import 'mavon-editor/dist/katex/katex.min.css'
+import 'mavon-editor/dist/katex/katex.min.js'
 
 // ルール設定
 for (var rule in rules) {
@@ -57,6 +62,7 @@ Vue.component('ModalDialog', ModalDialog)
 Vue.component('SlideUpDown', SlideUpDown)
 Vue.component('AccordionMenu', AccordionMenu)
 Vue.component('AccordionList', AccordionList)
+Vue.component('TextField', TextField)
 Vue.component('NumberField', NumberField)
 Vue.component('EmailField', EmailField)
 Vue.component('PasswordField', PasswordField)
