@@ -23,13 +23,15 @@
             v-if="htmlResource.id !== null"
             class="info"
             @click="editPage"
+            :disabled="otherUserEditing()"
           >
-            編集
+            {{ otherUserEditing() ? "編集中..." : "編集" }}
           </v-btn>
           <v-btn
             v-if="htmlResource.id !== null"
             class="info"
             @click="deletePage"
+            :disabled="otherUserEditing()"
           >
             削除
           </v-btn>
@@ -183,16 +185,89 @@ export default {
             return '/static/js/katex/katex.min.js'
           }
         }
-      }
+      },
+
+      documentListner: null,
+      hasNotification: false,
+      documentListnerInitialized: false
     }
   },
 
-  created () {
+  async created () {
+    this.loadingDialog.open()
+
+    await this.initOnSnapShots()
     window.onhashchange = this.initOnHashChange
     this.initialize()
+
+    this.loadingDialog.close()
   },
 
   methods: {
+    /**
+     * Firestoreのスナップショットの初期処理
+     */
+    async initOnSnapShots () {
+      // ドキュメント情報の変更を監視
+      this.documentListner = await DocumentResource.onSnapshots(async (snapshot) => {
+        if (snapshot.metadata.fromCache) {
+          // キャッシュからの呼び出しは無視する
+          return
+        }
+
+        if (this.documentListnerInitialized) {
+          if (this.hasNotification) {
+            // 既に通知が出ている場合は出さない
+            return
+          }
+
+          // 自分による変更は通知しない
+          if (this.htmlResource.editing === this.$store.state.user.uid) {
+            return
+          }
+          // 現在開いているページと異なるページの変更は無視する
+          const pageId = snapshot.docs[0].id
+          if (this.htmlResource.id !== pageId) {
+            return
+          }
+          // 編集中ユーザーIDの更新は保持する
+          const document = await DocumentResource.get(pageId)
+          if (this.htmlResource.editing !== document.editing) {
+            this.htmlResource.editing = document.editing
+
+            // 変数が開始された場合の更新は通知しない
+            if (document.editing !== null) {
+              return
+            }
+          }
+
+          this.hasNotification = true
+          // 画面遷移後の初期設定が終わった後にしか通知しない
+          this.$toasted.show('ページが更新されました', {
+            theme: 'toasted-primary',
+            position: 'top-right',
+            type: 'info',
+            action: {
+              text: '更新する',
+              onClick: async (e, toastObject) => {
+                this.loadingDialog.open()
+
+                toastObject.goAway(0)
+                await this.initialize()
+
+                this.loadingDialog.close()
+
+                this.hasNotification = false
+              }
+            }
+          })
+
+          return
+        }
+        this.documentListnerInitialized = true
+      })
+    },
+
     initOnHashChange () {
       // URLにページIDが指定されているときは自動表示する
       const pageId = window.location.hash.replace('#', '')
@@ -386,7 +461,10 @@ export default {
     /**
      * ページを編集する
      */
-    editPage () {
+    async editPage () {
+      await this.htmlResource.update({
+        editing: this.$store.state.user.uid
+      })
       this.editing = true
       this.editedHtml = this.htmlResource.resource
       this.name = this.htmlResource.name
@@ -397,7 +475,10 @@ export default {
     openEditPageDialog () {
       this.editPageDialog = true
     },
-    closeEditPageDialog () {
+    async closeEditPageDialog () {
+      await this.htmlResource.update({
+        editing: null
+      })
       this.editing = false
       this.initResource()
 
@@ -435,10 +516,20 @@ export default {
       } finally {
         this.name = ''
         this.editedHtml = ''
-        this.closeEditPageDialog()
+        await this.closeEditPageDialog()
         this.loadingDialog.close()
       }
+    },
+
+    otherUserEditing () {
+      return this.htmlResource.editing !== null
     }
+  },
+
+  beforeDestroy () {
+    // 監視用リスナーを破棄
+    window.onhashchange = null
+    this.documentListner()
   }
 }
 </script>

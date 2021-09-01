@@ -22,6 +22,16 @@ export class DocumentResource extends ModelBase {
   }
 
   /**
+   * リソースを取得する
+   * @param {String} id ドキュメントID
+   * @returns DocumentResourceモデル
+   */
+  static async get (id) {
+    const data = await firebase.db.getDocData(documentResourceCollection, id)
+    return new DocumentResource(data)
+  }
+
+  /**
    * リソースを全て取得する
    * @returns DocumentResourceモデルのリスト
    */
@@ -43,13 +53,13 @@ export class DocumentResource extends ModelBase {
    * @param {Boolean} editing ページが編集中かどうか
    * @returns DocumentResourceモデル
    */
-  static async create (name, resource, parentId = null, editing = false) {
+  static async create (name, resource, parentId = null) {
     const data = {
       parentId: parentId,
       name: name,
       resource: resource,
       createUser: Store.state.user.uid,
-      editing: editing
+      editing: null
     }
     const documentResourceData = await firebase.db.setDoc(documentResourceCollection, data)
 

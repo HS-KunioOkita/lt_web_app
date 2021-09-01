@@ -388,6 +388,7 @@ export default {
 
   async created () {
     this.loadingDialog.open()
+
     await this.initOnSnapShots()
     await this.initialize()
     this.initChartOptions()
