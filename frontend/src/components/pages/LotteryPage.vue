@@ -388,6 +388,7 @@ export default {
 
   async created () {
     this.loadingDialog.open()
+
     await this.initOnSnapShots()
     await this.initialize()
     this.initChartOptions()
@@ -648,6 +649,7 @@ export default {
           // 画面遷移後の初期設定が終わった後にしか反映しない
 
           await this.initAllLTHistory()
+          await this.initUserDataList()
           this.initImplementationLTDate()
           this.initChartData()
 
@@ -1207,6 +1209,7 @@ export default {
   }
 }
 </script>
+
 <style scoped>
   .lotteryButton {
     padding-left: 10px;

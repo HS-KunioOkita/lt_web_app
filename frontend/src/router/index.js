@@ -4,6 +4,7 @@ import multiguard from 'vue-router-multiguard'
 import LoginPage from '@/components/pages/LoginPage'
 import TopPage from '@/components/pages/TopPage'
 import LotteryPage from '@/components/pages/LotteryPage'
+import DocumentPage from '@/components/pages/DocumentPage'
 import ProfilePage from '@/components/pages/ProfilePage'
 import SettingPage from '@/components/pages/SettingPage'
 import AdminPage from '@/components/pages/AdminPage'
@@ -51,6 +52,10 @@ const routes = [
       {
         path: '/lottery',
         component: LotteryPage
+      },
+      {
+        path: '/document',
+        component: DocumentPage
       },
       {
         path: '/profile',

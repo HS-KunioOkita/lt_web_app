@@ -22,3 +22,7 @@ export const password = (value) => {
   const passwordFormat = /[a-zA-Z0-9!-/:-@\\[-`{-~]+$/
   return passwordFormat.test(value) || '{_field_}は英数字と記号で入力してください'
 }
+
+export const documentTitle = (value) => {
+  return value.length <= 30 || '{_field_}は30字以内で入力してください'
+}

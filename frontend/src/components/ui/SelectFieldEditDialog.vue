@@ -19,7 +19,7 @@
         :item-text="itemText"
         :item-value="itemValue"
         single-line
-      ></v-select>
+      />
     </template>
   </v-edit-dialog>
 </template>
