@@ -5,7 +5,6 @@ import LoginPage from '@/components/pages/LoginPage'
 import TopPage from '@/components/pages/TopPage'
 import LotteryPage from '@/components/pages/LotteryPage'
 import DocumentPage from '@/components/pages/DocumentPage'
-import EditorPage from '@/components/pages/EditorPage'
 import ProfilePage from '@/components/pages/ProfilePage'
 import SettingPage from '@/components/pages/SettingPage'
 import AdminPage from '@/components/pages/AdminPage'
@@ -43,13 +42,6 @@ const routes = [
   {
     path: '/login',
     component: LoginPage
-  },
-  {
-    path: '/editor',
-    name: 'EditorPage',
-    component: EditorPage,
-    meta: { requiresAuth: true },
-    props: true
   },
   {
     path: '/',

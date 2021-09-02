@@ -38,7 +38,6 @@ import InfomationDialog from '@/components/ui/InfomationDialog'
 import ErrorDialog from '@/components/ui/ErrorDialog'
 import List from '@/components/ui/List'
 import ListGroup from '@/components/ui/ListGroup'
-import Editor from '@tinymce/tinymce-vue'
 import * as customRules from '@/libs/validation'
 import mixins from '@/libs/mixins/mixins'
 import '@/css/common.css'
@@ -85,7 +84,6 @@ Vue.component('InfomationDialog', InfomationDialog)
 Vue.component('ErrorDialog', ErrorDialog)
 Vue.component('List', List)
 Vue.component('ListGroup', ListGroup)
-Vue.component('Editor', Editor)
 Vue.use(VueAxios, axios)
 Vue.use(Toasted)
 Vue.use(mavonEditor)

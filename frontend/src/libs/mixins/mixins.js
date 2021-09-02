@@ -69,11 +69,6 @@ const mixins = {
         .use(plantuml)
         .use(multimdTable)
         .use(br),
-
-      // リッチテキストエディタの設定
-      tinyMCE: {
-        apikey: 'txb6vef1adktcjrnnv72w3yqrhdyjfqvm9c6hsev37n2526s'
-      }
     }
   },
 
