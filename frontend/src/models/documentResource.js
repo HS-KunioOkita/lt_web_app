@@ -70,8 +70,10 @@ export class DocumentResource extends ModelBase {
    * リソースを更新する
    * @param {object} data 更新するデータ
    */
-  async update (data) {
-    data.updateUser = Store.state.user.uid
+  async update (data, setUpdateUser = true) {
+    if (setUpdateUser) {
+      data.updateUser = Store.state.user.uid
+    }
     await firebase.db.setDoc(documentResourceCollection, data, this.id)
 
     this.updateParams(data)
