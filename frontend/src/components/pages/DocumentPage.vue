@@ -5,7 +5,7 @@
       <Sidebar
         v-model="sideBarWidth"
         class="secondary sideMenu"
-        :defaultWidth="300"
+        :defaultWidth="defaultWidth"
         :maxWidth="600"
         :minWidth="50"
         title="ページツリー"
@@ -156,6 +156,8 @@
 <script>
 import { DocumentResource } from '@/models/DocumentResource'
 
+const DEFAULT_SIDEBAR_WIDTH = 300
+
 export default {
   data () {
     return {
@@ -180,7 +182,8 @@ export default {
       editedHtml: '',
       onId: null,
 
-      sideBarWidth: 0,
+      defaultWidth: DEFAULT_SIDEBAR_WIDTH,
+      sideBarWidth: DEFAULT_SIDEBAR_WIDTH,
 
       mavonEditor: {
         toolbars: {
@@ -657,7 +660,7 @@ export default {
 
   .documentContents {
     position: relative;
-    width: calc(100vh - var(--sidebarWidth));
+    width: calc(100% - var(--sidebarWidth));
     height: 100%;
     padding: 0px 20px;
   }
