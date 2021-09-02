@@ -7,7 +7,12 @@
       >
         {{ icon }}
       </v-icon>
-      <div @click="onClick">{{ title }}</div>
+      <div
+        @click="onClick"
+        :class="selected ? 'selected' : ''"
+      >
+        {{ title }}
+      </div>
     </div>
     <SlideUpDown :active="active" class="contents">
       <slot />
@@ -18,11 +23,29 @@
 <script>
 export default {
   props: {
+    on: {
+      type: Boolean,
+      default: false
+    },
+    selected: {
+      type: Boolean,
+      default: false
+    },
     title: {
       type: String
     },
     onClick: {
       type: Function
+    }
+  },
+
+  watch: {
+    on: function (newValue, oldValue) {
+      this.active = newValue
+    },
+
+    active: function (newValue, oldValue) {
+      this.icon = newValue ? 'mdi-chevron-down' : 'mdi-chevron-right'
     }
   },
 
@@ -33,10 +56,17 @@ export default {
     }
   },
 
+  created () {
+    this.initialize()
+  },
+
   methods: {
+    initialize () {
+      this.active = this.on
+    },
+
     onClickTitle () {
       this.active = !this.active
-      this.icon = this.active ? 'mdi-chevron-down' : 'mdi-chevron-right'
     }
   }
 }
@@ -50,6 +80,10 @@ export default {
 
   .contents {
     margin-left: 20px;
+  }
+
+  .selected {
+    font-weight: bold;
   }
 </style>
 

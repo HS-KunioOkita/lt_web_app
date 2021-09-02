@@ -1,52 +1,59 @@
 <template>
   <div class="contents">
     <h2 class="heading16">ドキュメント</h2>
-      <div class="document">
-        <div
-          class="sideMenu"
+    <div class="document">
+      <Sidebar
+        v-model="sideBarWidth"
+        class="secondary sideMenu"
+        :defaultWidth="300"
+        :maxWidth="600"
+        :minWidth="50"
+        title="ページツリー"
+      >
+        <AccordionList
+          :item="documentList"
+          keyName="id"
+          sortKey="name"
+          :onClick="selectItem"
+          :onId="onId"
+          class="pageTree"
+        />
+      </Sidebar>
+      <div class="documentContents" :style="contentsStyle">
+        <v-btn
+          class="info"
+          @click="createNewPage"
         >
-          <AccordionList
-            :item="documentList"
-            keyName="id"
-            sortKey="name"
-            :onClick="selectItem"
-          />
+          新規ページ作成
+        </v-btn>
+        <v-btn
+          v-if="htmlResource.id !== null"
+          class="info"
+          @click="editPage"
+          :disabled="otherUserEditing()"
+        >
+          {{ otherUserEditing() ? "編集中..." : "編集" }}
+        </v-btn>
+        <v-btn
+          v-if="htmlResource.id !== null"
+          class="info"
+          @click="deletePage"
+          :disabled="otherUserEditing()"
+        >
+          削除
+        </v-btn>
+        <div
+          v-if="htmlResource.id !== null"
+          class="pageName"
+        >
+          {{ htmlResource.path }}
         </div>
-        <div class="documentContents">
-          <v-btn
-            class="info"
-            @click="createNewPage"
+        <div class="documentResource">
+          <div
+            class="markdown-body detail"
           >
-            新規ページ作成
-          </v-btn>
-          <v-btn
-            v-if="htmlResource.id !== null"
-            class="info"
-            @click="editPage"
-            :disabled="otherUserEditing()"
-          >
-            {{ otherUserEditing() ? "編集中..." : "編集" }}
-          </v-btn>
-          <v-btn
-            v-if="htmlResource.id !== null"
-            class="info"
-            @click="deletePage"
-            :disabled="otherUserEditing()"
-          >
-            削除
-          </v-btn>
-          <div class="documentResource">
-            <div
-              v-if="htmlResource.id !== null"
-              class="pageName"
-            >
-              {{ htmlResource.path }}
-            </div>
-            <div
-              class="markdown-body detail"
-            >
-              <div v-html="md.render(htmlResource.resource)" />
-            </div>
+            <div v-html="md.render(htmlResource.resource)" />
+          </div>
         </div>
       </div>
     </div>
@@ -81,6 +88,7 @@
               />
               <mavon-editor
                 v-model="editedHtml"
+                :toolbars="mavonEditor.toolbars"
                 :externalLink="mavonEditor.externalLink"
                 language="ja"
                 placeholder="編集エリア"
@@ -160,6 +168,7 @@ export default {
       },
       documentList: [],
       subDocumentList: [],
+      allDocumentListForList: [],
       documentListForList: [],
       editPageDialog: false,
       deletePageDialog: false,
@@ -169,8 +178,43 @@ export default {
       editing: false,
       newHtml: '',
       editedHtml: '',
+      onId: null,
+
+      sideBarWidth: 0,
 
       mavonEditor: {
+        toolbars: {
+          bold: true,
+          italic: true,
+          header: true,
+          underline: true,
+          strikethrough: true,
+          mark: true,
+          superscript: true,
+          subscript: true,
+          quote: true,
+          ol: true,
+          ul: true,
+          link: true,
+          code: true,
+          table: true,
+          help: true,
+          alignleft: true,
+          aligncenter: true,
+          alignright: true,
+          subfield: true,
+          preview: true,
+          fullscreen: true,
+          // false
+          imagelink: false,
+          undo: false,
+          redo: false,
+          readmodel: false,
+          htmlcode: false,
+          trash: false,
+          save: false,
+          navigation: false
+        },
         externalLink: {
           markdown_css: function () {
             return '/static/css/markdown/github-markdown.min.css'
@@ -189,7 +233,8 @@ export default {
 
       documentListner: null,
       hasNotification: false,
-      documentListnerInitialized: false
+      documentListnerInitialized: false,
+      myOperation: false
     }
   },
 
@@ -197,10 +242,17 @@ export default {
     this.loadingDialog.open()
 
     await this.initOnSnapShots()
-    window.onhashchange = this.initOnHashChange
     this.initialize()
 
     this.loadingDialog.close()
+  },
+
+  computed: {
+    contentsStyle () {
+      return {
+        '--sidebarWidth': `${this.sideBarWidth}px`
+      }
+    }
   },
 
   methods: {
@@ -212,6 +264,11 @@ export default {
       this.documentListner = await DocumentResource.onSnapshots(async (snapshot) => {
         if (snapshot.metadata.fromCache) {
           // キャッシュからの呼び出しは無視する
+          return
+        }
+        if (this.myOperation) {
+          // 自分の操作による変更の場合は通知しない
+          this.myOperation = false
           return
         }
 
@@ -268,9 +325,20 @@ export default {
       })
     },
 
-    initOnHashChange () {
+    changePageIdQueryParams (pageId = null) {
       // URLにページIDが指定されているときは自動表示する
-      const pageId = window.location.hash.replace('#', '')
+      if (pageId === null) {
+        pageId = this.$route.query.pageId
+      } else {
+        this.$router.push(
+          {
+            query: {
+              pageId: pageId
+            }
+          },
+          () => {}
+        )
+      }
 
       const resource = this.htmlResources[pageId]
       if (!pageId || resource === undefined) {
@@ -279,6 +347,7 @@ export default {
       }
 
       this.htmlResource = resource
+      this.onId = resource.id
     },
     initResource () {
       this.name = ''
@@ -330,10 +399,10 @@ export default {
         this.htmlResources[resource.id].path = path
       }
 
-      this.documentListForList = documentListForList
+      this.allDocumentListForList = documentListForList
       this.documentList = documentList
 
-      this.initOnHashChange()
+      this.changePageIdQueryParams()
     },
     /**
      * ページのパスを生成する
@@ -369,8 +438,8 @@ export default {
      */
     selectItem (item) {
       this.htmlResource = this.htmlResources[item.id]
-      // フラグメント識別子を設定
-      window.location.hash = item.id
+      // URLにpageIdを設定
+      this.changePageIdQueryParams(item.id)
     },
 
     /**
@@ -378,6 +447,7 @@ export default {
      */
     createNewPage () {
       this.parentId = this.htmlResource.id
+      this.documentListForList = this.allDocumentListForList.concat()
       this.openEditPageDialog()
     },
 
@@ -413,11 +483,12 @@ export default {
     async deletePageAsync (func) {
       try {
         this.loadingDialog.open()
+        this.myOperation = true
         await func()
 
         this.initResource()
         this.initHtmlResource()
-        window.location.hash = ''
+        this.changePageIdQueryParams('')
         // データ読み込み
         await this.initialize()
       } catch (error) {
@@ -465,11 +536,37 @@ export default {
       await this.htmlResource.update({
         editing: this.$store.state.user.uid
       })
+
+      var documentListForList = this.allDocumentListForList.concat()
+      const id = this.htmlResource.id
+      this.documentListForList = this.createDocumentListForList(documentListForList, id)
+
       this.editing = true
       this.editedHtml = this.htmlResource.resource
       this.name = this.htmlResource.name
       this.parentId = this.htmlResource.parentId
       this.openEditPageDialog()
+    },
+    createDocumentListForList (list, id) {
+      var documentListForList = list.concat()
+
+      var idList = []
+      // IDが一致するものを除く
+      documentListForList = documentListForList.filter((x) => {
+        if (x.parentId === id) {
+          idList.push(x.id)
+          return false
+        }
+
+        return x.id !== id
+      })
+
+      // 親ページIDが一致するものも全て除く
+      for (var id_ of idList) {
+        documentListForList = this.createDocumentListForList(documentListForList, id_)
+      }
+
+      return documentListForList
     },
 
     openEditPageDialog () {
@@ -479,6 +576,7 @@ export default {
       await this.htmlResource.update({
         editing: null
       })
+      this.documentListForList = []
       this.editing = false
       this.initResource()
 
@@ -491,6 +589,7 @@ export default {
     async savePage () {
       try {
         this.loadingDialog.open()
+        this.myOperation = true
 
         var pageId = ''
         if (this.editing) {
@@ -506,7 +605,7 @@ export default {
         }
 
         // データ読み込み
-        window.location.hash = pageId
+        this.changePageIdQueryParams(pageId)
         this.initHtmlResource()
         await this.initialize()
       } catch (error) {
@@ -522,13 +621,15 @@ export default {
     },
 
     otherUserEditing () {
-      return this.htmlResource.editing !== null
+      if (this.htmlResource.editing === null) {
+        return false
+      }
+      return this.htmlResource.editing !== this.$store.state.user.uid
     }
   },
 
   beforeDestroy () {
     // 監視用リスナーを破棄
-    window.onhashchange = null
     this.documentListner()
   }
 }
@@ -538,32 +639,33 @@ export default {
   .contents {
     position: relative;
     padding: 20px auto;
-    height: calc(100% - 64px);
+    height: calc(100vh - 90px);
   }
 
   .pageName {
+    font-family: "M Plus 1p" !important;
     font-size: 30px;
     border-bottom: solid 3px rgb(201, 201, 201);
   }
 
   .document {
     position: relative;
-    height: 100%;
+    height: calc(100% - 60px);
     display: flex;
     align-items: center;
   }
 
   .documentContents {
     position: relative;
-    width: calc(100% - 250px);
+    width: calc(100vh - var(--sidebarWidth));
     height: 100%;
-    padding: 0px 10px;
+    padding: 0px 20px;
   }
 
   .documentResource {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 100px);
     overflow-y: scroll;
     padding: 10px;
   }
@@ -581,11 +683,11 @@ export default {
 
   .sideMenu {
     position: relative;
-    width: 250px;
     height: 100%;
-    background-color: #c4ffb5;
-    overflow-y: scroll;
-    padding: 10px;
+    font-family: "M Plus 1p" !important;
+  }
+  .pageTree {
+    margin-top: 5px;
   }
 
   .selectParentLabel {
