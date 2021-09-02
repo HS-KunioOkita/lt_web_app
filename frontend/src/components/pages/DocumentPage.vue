@@ -42,12 +42,13 @@
         >
           削除
         </v-btn>
-        <div
-          v-if="htmlResource.id !== null"
-          class="pageName"
-        >
-          {{ htmlResource.path }}
+        <div v-if="htmlResource.id !== null">
+          <div class="pageName">
+            {{ htmlResource.path }}
+          </div>
+          <div class="userInfoMessage">{{ userInfoMessage }}</div>
         </div>
+
         <div class="documentResource">
           <div
             class="markdown-body detail"
@@ -154,7 +155,9 @@
 </template>
 
 <script>
-import { DocumentResource } from '@/models/DocumentResource'
+import { User } from '@/models/user'
+import { DocumentResource } from '@/models/documentResource'
+import { convertStringFromDate } from '@/libs/utils'
 
 const DEFAULT_SIDEBAR_WIDTH = 300
 
@@ -168,6 +171,7 @@ export default {
         name: '',
         resource: ''
       },
+      userNames: {},
       documentList: [],
       subDocumentList: [],
       allDocumentListForList: [],
@@ -255,6 +259,23 @@ export default {
       return {
         '--sidebarWidth': `${this.sideBarWidth}px`
       }
+    },
+
+    userInfoMessage () {
+      const createUserName = this.userNames[this.htmlResource.createUser]
+      const createdDate = convertStringFromDate(new Date(this.htmlResource.createdAt))
+      const updatedDate = convertStringFromDate(new Date(this.htmlResource.updatedAt))
+
+      if (this.htmlResource.updateUser === null) {
+        return `${createUserName} が ${createdDate} に作成`
+      }
+
+      if (this.htmlResource.createUser === this.htmlResource.updateUser) {
+        return `${createUserName} が ${createdDate} に作成し、${updatedDate} に最終更新`
+      }
+
+      const updateUserName = this.userNames[this.htmlResource.updateUser]
+      return `${createUserName} が ${createdDate} に作成し、${updateUserName} が ${updatedDate} に最終更新`
     }
   },
 
@@ -368,6 +389,13 @@ export default {
      * 初期処理
      */
     async initialize () {
+      const allUserList = await User.getAllUsers()
+      var userNames = {}
+      for (var user of allUserList) {
+        userNames[user.uid] = user.name
+      }
+      this.userNames = userNames
+
       // ドキュメントのリソースを取得
       const resources = await DocumentResource.getAllResource()
 
@@ -449,6 +477,7 @@ export default {
      * 新規ページを作成する
      */
     createNewPage () {
+      this.editing = false
       this.parentId = this.htmlResource.id
       this.documentListForList = this.allDocumentListForList.concat()
       this.openEditPageDialog()
@@ -538,7 +567,7 @@ export default {
     async editPage () {
       await this.htmlResource.update({
         editing: this.$store.state.user.uid
-      })
+      }, false)
 
       var documentListForList = this.allDocumentListForList.concat()
       const id = this.htmlResource.id
@@ -578,7 +607,7 @@ export default {
     async closeEditPageDialog () {
       await this.htmlResource.update({
         editing: null
-      })
+      }, false)
       this.documentListForList = []
       this.editing = false
       this.initResource()
@@ -648,7 +677,13 @@ export default {
   .pageName {
     font-family: "M Plus 1p" !important;
     font-size: 30px;
-    border-bottom: solid 3px rgb(201, 201, 201);
+    border-bottom: solid 1px rgb(201, 201, 201);
+  }
+  .userInfoMessage {
+    padding: 4px 0px;
+    font-family: "M Plus 1p" !important;
+    font-size: 13px;
+    border-bottom: solid 1px rgb(201, 201, 201);
   }
 
   .document {
@@ -668,7 +703,7 @@ export default {
   .documentResource {
     position: relative;
     width: 100%;
-    height: calc(100% - 100px);
+    height: calc(100% - 122px);
     overflow-y: scroll;
     padding: 10px;
   }
