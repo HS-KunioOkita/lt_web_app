@@ -176,6 +176,7 @@
 import { reload } from '@/libs/utils'
 
 export default {
+  title: 'ユーザー設定',
   data () {
     return {
       profileDialog: false,

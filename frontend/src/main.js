@@ -89,6 +89,8 @@ Vue.use(Toasted)
 Vue.use(mavonEditor)
 Vue.mixin(mixins)
 
+Vue.prototype.$version = 'v1.1.1'
+
 /* eslint-disable no-new */
 const vue = new Vue({
   el: '#app',
@@ -98,4 +100,5 @@ const vue = new Vue({
   vuetify,
   store
 })
+
 export default vue

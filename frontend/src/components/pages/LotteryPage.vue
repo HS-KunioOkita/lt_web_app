@@ -310,6 +310,7 @@ const MAX_SCORE = 100 // スコアの最大値
 const NEXT_INTERVAL = 30 // days
 
 export default {
+  title: '抽選',
   components: {
     Chart
   },

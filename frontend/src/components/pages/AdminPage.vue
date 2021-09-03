@@ -186,6 +186,7 @@ const ActionType = {
 }
 
 export default {
+  title: '管理者ページ',
   data: () => ({
     loading: false,
     dialog: false,
