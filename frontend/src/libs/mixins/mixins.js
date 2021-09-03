@@ -75,7 +75,11 @@ const mixins = {
         .use(container, 'warning')
         .use(container, 'danger')
         .use(plantuml)
-        .use(multimdTable)
+        .use(multimdTable, {
+          multiline: true,
+          rowspan: true,
+          headerless: true
+        })
         .use(br)
     }
   },
