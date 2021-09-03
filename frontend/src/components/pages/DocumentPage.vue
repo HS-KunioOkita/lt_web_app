@@ -262,8 +262,7 @@ export default {
 
   watch: {
     htmlResource (val, old) {
-      const title = val.name
-      document.title = title ? title : 'ドキュメント'
+      document.title = val.name || 'ドキュメント'
     }
   },
 
