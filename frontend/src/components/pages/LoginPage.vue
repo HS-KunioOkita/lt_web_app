@@ -120,6 +120,7 @@ import { debugPostRequest } from '@/libs/api'
 
 export default {
   name: 'App',
+  title: 'ログイン',
   data: () => ({
     showPassword: false,
     user: {

@@ -94,6 +94,11 @@
                 language="ja"
                 placeholder="編集エリア"
                 class="editor"
+                v-on:change="overrideRender"
+                v-on:subfieldToggle="toggle"
+                v-on:previewToggle="toggle"
+                :subfield="subfield"
+                ref="mavonEditor"
               />
             </v-container>
           </v-card-text>
@@ -162,6 +167,7 @@ import { convertStringFromDate } from '@/libs/utils'
 const DEFAULT_SIDEBAR_WIDTH = 300
 
 export default {
+  title: 'ドキュメント',
   data () {
     return {
       htmlResources: {},
@@ -182,9 +188,9 @@ export default {
       parentId: null,
 
       editing: false,
-      newHtml: '',
       editedHtml: '',
       onId: null,
+      subfield: false,
 
       defaultWidth: DEFAULT_SIDEBAR_WIDTH,
       sideBarWidth: DEFAULT_SIDEBAR_WIDTH,
@@ -254,6 +260,13 @@ export default {
     this.loadingDialog.close()
   },
 
+  watch: {
+    htmlResource (val, old) {
+      const title = val.name
+      document.title = title ? title : 'ドキュメント'
+    }
+  },
+
   computed: {
     contentsStyle () {
       return {
@@ -280,6 +293,15 @@ export default {
   },
 
   methods: {
+    /**
+     * mavonEditorのプレビュー結果を上書きする
+     */
+    overrideRender (value, render = null) {
+      this.$refs.mavonEditor.d_render = this.md.render(value)
+    },
+    toggle (status, value) {
+      this.overrideRender(value)
+    },
     /**
      * Firestoreのスナップショットの初期処理
      */
@@ -316,7 +338,7 @@ export default {
           if (this.htmlResource.editing !== document.editing) {
             this.htmlResource.editing = document.editing
 
-            // 変数が開始された場合の更新は通知しない
+            // 編集が開始された場合の更新は通知しない
             if (document.editing !== null) {
               return
             }
@@ -565,19 +587,30 @@ export default {
      * ページを編集する
      */
     async editPage () {
-      await this.htmlResource.update({
-        editing: this.$store.state.user.uid
-      }, false)
+      try {
+        this.loadingDialog.open()
 
-      var documentListForList = this.allDocumentListForList.concat()
-      const id = this.htmlResource.id
-      this.documentListForList = this.createDocumentListForList(documentListForList, id)
+        this.myOperation = true
+        await this.htmlResource.update({
+          editing: this.$store.state.user.uid
+        }, false)
+      } catch (error) {
+        this.$errorDialog({
+          error: error.class
+        })
+      } finally {
+        var documentListForList = this.allDocumentListForList.concat()
+        const id = this.htmlResource.id
+        this.documentListForList = this.createDocumentListForList(documentListForList, id)
 
-      this.editing = true
-      this.editedHtml = this.htmlResource.resource
-      this.name = this.htmlResource.name
-      this.parentId = this.htmlResource.parentId
-      this.openEditPageDialog()
+        this.editing = true
+        this.editedHtml = this.htmlResource.resource
+        this.name = this.htmlResource.name
+        this.parentId = this.htmlResource.parentId
+
+        this.loadingDialog.close()
+        this.openEditPageDialog()
+      }
     },
     createDocumentListForList (list, id) {
       var documentListForList = list.concat()
@@ -604,15 +637,34 @@ export default {
     openEditPageDialog () {
       this.editPageDialog = true
     },
-    async closeEditPageDialog () {
-      await this.htmlResource.update({
-        editing: null
-      }, false)
-      this.documentListForList = []
-      this.editing = false
-      this.initResource()
+    async closeEditPageDialog (showDialog = true) {
+      const saved = this.htmlResource.id !== null
+      try {
+        if (showDialog && saved) {
+          this.loadingDialog.open()
+        }
 
-      this.editPageDialog = false
+        this.myOperation = true
+        if (saved) {
+          await this.htmlResource.update({
+            editing: null
+          }, false)
+        }
+      } catch (error) {
+        this.$errorDialog({
+          error: error.class
+        })
+      } finally {
+        this.documentListForList = []
+        this.editing = false
+        this.initResource()
+
+        if (showDialog && saved) {
+          this.loadingDialog.close()
+        }
+        this.subfield = false
+        this.editPageDialog = false
+      }
     },
 
     /**
@@ -647,7 +699,7 @@ export default {
       } finally {
         this.name = ''
         this.editedHtml = ''
-        await this.closeEditPageDialog()
+        await this.closeEditPageDialog(false)
         this.loadingDialog.close()
       }
     },

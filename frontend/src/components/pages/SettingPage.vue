@@ -24,6 +24,7 @@
 
 <script>
 export default {
+  title: 'アプリ設定',
   methods: {
     openDialog () {}
   }
@@ -41,5 +42,9 @@ export default {
     justify-content: center;
     border: 1px solid #ddd;
     padding: 20px;
+  }
+
+  .card {
+    margin-top: 40px;
   }
 </style>

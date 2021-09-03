@@ -25,6 +25,14 @@ import br from 'markdown-it-br'
 
 // 全コンポーネントで使用できる共通データ
 const mixins = {
+  mounted () {
+    let { title } = this.$options
+    if (title) {
+      title = typeof title === 'function' ? title.call(this) : title
+      document.title = title
+    }
+  },
+
   data () {
     return {
       loadingDialogInstance: null,

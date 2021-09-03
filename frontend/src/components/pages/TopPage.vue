@@ -21,6 +21,7 @@
     <v-app-bar color="primary" dark app clipped-left>
       <v-app-bar-nav-icon @click="drawer=!drawer" />
       <v-toolbar-title>LT アプリ</v-toolbar-title>
+      <div class="version">{{ $version }}</div>
       <v-spacer />
       <v-toolbar-items>
         <v-menu offset-y>
@@ -169,5 +170,11 @@ export default {
   .profileImage{
     padding-left: 5px;
     text-transform: none;
+  }
+
+  .version {
+    position: relative;
+    font-size: 13px;
+    margin: 6px 0px 0px 4px;
   }
 </style>
