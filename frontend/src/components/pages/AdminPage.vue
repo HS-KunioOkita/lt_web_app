@@ -412,7 +412,7 @@ export default {
       const index = this.allUserList.indexOf(item)
 
       this.$modalDialog({
-        title: '編集',
+        title: '確認',
         message: `${item.name} アカウントを削除しますか?`,
         ok: async () => {
           try {

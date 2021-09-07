@@ -20,6 +20,7 @@ backend/secret/*
 *.ntvs*
 *.njsproj
 *.sln
+*.js-e
 
 .DS_Store
 .python-version
