@@ -25,6 +25,9 @@ if [[ ! $version =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
   usage
 fi
 
+# 最新状況取得
+git fetch
+
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
 is_develop=false
 if [[ ! $CURRENT_BRANCH = develop ]]; then
@@ -45,7 +48,6 @@ MAIN_PATH=frontend/src/main.js
 # run
 if [[ $run_mode = run ]]; then
   # 最新のdevelopブランチ取得
-  git fetch
   if "$is_develop"; then
     git checkout develop
   fi
@@ -75,7 +77,7 @@ if [[ $run_mode = run ]]; then
 
 # dryrun
 elif [[ $run_mode = dryrun ]]; then
-  message=$'git fetch\n'
+  message=""
   if "$is_develop"; then
     message+=$'git checkout develop\n'
   fi
