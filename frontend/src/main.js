@@ -89,7 +89,7 @@ Vue.use(Toasted)
 Vue.use(mavonEditor)
 Vue.mixin(mixins)
 
-Vue.prototype.$version = 'v0.0.1'
+Vue.prototype.$version = 'v1.1.4'
 
 /* eslint-disable no-new */
 const vue = new Vue({
