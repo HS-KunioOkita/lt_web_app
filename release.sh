@@ -65,7 +65,7 @@ if [[ $run_mode = run ]]; then
   $(git checkout -b $RELEASE_BRANCH)
   sed -i -e "s/v0.0.1/v$version/g" $MAIN_PATH
   git add $MAIN_PATH
-  git commit -m "バージョン$version設定"
+  git commit -m "v$version 設定"
 
   git push origin $RELEASE_BRANCH
 
