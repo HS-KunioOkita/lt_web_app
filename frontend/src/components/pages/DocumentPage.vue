@@ -160,6 +160,7 @@
 </template>
 
 <script>
+import 'highlight.js/styles/xcode.css'
 import { User } from '@/models/user'
 import { DocumentResource } from '@/models/documentResource'
 import { convertStringFromDate } from '@/libs/utils'
