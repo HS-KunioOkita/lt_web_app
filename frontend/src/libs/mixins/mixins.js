@@ -54,7 +54,7 @@ const mixins = {
           return hljs.highlightAuto(code, [lang]).value
         },
         html: true,
-        linkify: true,
+        linkify: false,
         breaks: true,
         typographer: true
       })
