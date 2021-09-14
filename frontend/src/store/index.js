@@ -34,7 +34,7 @@ const store = new Vuex.Store({
   plugins: [createPersistedState(
     {
       key: 'ltWebApp',
-      storage: window.sessionStorage
+      storage: window.localStorage
     }
   )]
 })
