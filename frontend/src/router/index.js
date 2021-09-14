@@ -113,7 +113,14 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
-    next()
+    const path = from.query.redirect
+    if (path) {
+      next()
+      // リダイレクト用パスがある場合はリダイレクトさせる
+      next({ path: path })
+    } else {
+      next()
+    }
     return
   }
 
