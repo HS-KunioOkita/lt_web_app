@@ -56,12 +56,8 @@
               <DatePickerEditDialog
                 v-model="item.date"
                 :save="saveLTHistory.bind(this, item)"
-                :open="operateEditDialog.bind(this, item, {
-                  date: $store.state.user.uid
-                })"
-                :close="operateEditDialog.bind(this, item, {
-                  date: null
-                })"
+                :open="operateEditDialog.bind(this, item, 'date', $store.state.user.uid)"
+                :close="operateEditDialog.bind(this, item, 'date', null)"
                 :disabled="isDisabledEditDialog(item.editing.date)"
               />
             </template>
@@ -375,7 +371,9 @@ export default {
     ltHistoryListner: null,
     userListner: null,
     hasNotification: false,
-    myOperation: false
+    myOperation: false,
+
+    editingInitHandler: null
   }),
 
   computed: {
@@ -405,6 +403,8 @@ export default {
     this.initChartOptions()
 
     this.loadingDialog.close()
+
+    window.addEventListener('beforeunload', this.initHandler)
   },
 
   mounted () {
@@ -460,7 +460,17 @@ export default {
     })
   },
 
+  beforeRouteLeave (to, from, next) {
+    this.initHandler()
+    next()
+  },
+
   methods: {
+    initHandler () {
+      if (this.editingInitHandler) {
+        this.editingInitHandler.item.update(this.editingInitHandler.data)
+      }
+    },
     /**
      * 初期化処理
      */
@@ -1136,11 +1146,11 @@ export default {
       return uidEditing !== this.$store.state.user.uid
     },
     /**
-     * LT履歴編集ダイアログの操作状況を更新する
+     * LT履歴編集ダイアログの操作状況を更新する内部メソッド
      * @param {LTHistory} ltHistory LT履歴
      * @param {object} editing 編集状況データ
      */
-    async operateEditDialog (ltHistory, editing) {
+    async _operateEditDialog (ltHistory, editing) {
       this.myOperation = true
       var data = this.createEditingData(ltHistory, editing)
 
@@ -1153,10 +1163,50 @@ export default {
      * @param {string} key 編集中のフィールド名
      * @param {*} value 更新する値
      */
+    async operateEditDialog (ltHistory, key, value) {
+      var data = {}
+      data[key] = value
+
+      if (value === null) {
+        this.editingInitHandler = null
+      } else {
+        var initData = {}
+        initData[key] = null
+
+        this.editingInitHandler = {
+          item: ltHistory,
+          data: this.createEditingData(ltHistory, initData)
+        }
+      }
+
+      await this._operateEditDialog(ltHistory, data)
+    },
+    /**
+     * LT履歴詳細編集ダイアログの操作状況を更新する
+     * @param {LTHistory} ltHistory LT履歴
+     * @param {number} index LT履歴リストのindex
+     * @param {string} key 編集中のフィールド名
+     * @param {*} value 更新する値
+     */
     async operateDetailsEditDialog (ltHistory, index, key, value) {
-      var details = ltHistory.editing.details.concat()
+      var details = ltHistory.editing.details.map((obj) => Object.assign({}, obj))
       details[index][key] = value
-      await this.operateEditDialog(ltHistory, {
+
+      if (value === null) {
+        this.editingInitHandler = null
+      } else {
+        var initData = ltHistory.editing.details.map((obj) => Object.assign({}, obj))
+        initData[index][key] = null
+
+        this.editingInitHandler = {
+          item: ltHistory,
+          data: this.createEditingData(ltHistory, {
+            details: initData
+          })
+        }
+      }
+
+      await this._operateEditDialog(ltHistory, {
         details: details
       })
     },
@@ -1268,6 +1318,10 @@ export default {
     this.userListner()
     // 通知をクリア
     this.$toasted.clear()
+  },
+
+  destroyed () {
+    window.removeEventListener('beforeunload', this.initHandler)
   }
 }
 </script>
