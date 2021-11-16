@@ -35,13 +35,4 @@ export class Setting extends ModelBase {
 
     this.updateParams(data)
   }
-
-  // /**
-  //  * プロフィールの変更を監視する
-  //  * @param {Function} callbackFunc 監視対象に変更があった時に実施する処理
-  //  */
-  // static async onSnapshots (callbackFunc) {
-  //   const docList = await firebase.db.getDocList(settingCollection)
-  //   return firebase.db.onSnapshot(docList, callbackFunc)
-  // }
 }
