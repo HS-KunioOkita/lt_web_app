@@ -8,7 +8,7 @@
           <!-- LT実施履歴 -->
           <v-data-table
             class="vue_tbl implementationHistory"
-            :items="allLTHistory"
+            :items="ltHistoryFiltered"
             sort-by="index"
             :headers="headers"
             :loading="loading"
@@ -104,21 +104,21 @@
             <v-row align="center">
               <v-col cols="11" sm="11" md="5">
                 <DatePicker
-                  v-model="lotteryStartDate"
+                  v-model="setting.settings.filterStartDate"
                   label="対象期間"
                   width="100px"
                   :disabled="loading"
-                  :onClose="initUserDataList"
+                  :onClose="updatefilterDate"
                 />
               </v-col>
               <v-col cols="11" sm="11" md="1">〜</v-col>
               <v-col cols="11" sm="11" md="5">
                 <DatePicker
-                  v-model="lotteryEndDate"
+                  v-model="setting.settings.filterEndDate"
                   label="対象期間"
                   width="100px"
                   :disabled="loading"
-                  :onClose="initUserDataList"
+                  :onClose="updatefilterDate"
                 />
               </v-col>
               <v-col cols="10" sm="10" md="10">
@@ -131,7 +131,11 @@
                   </tr>
                   <tr v-for="userData in userDataList" :key="userData.user.name">
                     <td>
-                      <input type="checkbox" v-model="userData.checked" />
+                      <input
+                        type="checkbox"
+                        v-model="userData.checked"
+                        v-on:change="updateSkipUsers"
+                      />
                     </td>
                     <td>{{ userData.user.name }}</td>
                     <td>{{ userData.numOfPresentations }}</td>
@@ -285,6 +289,7 @@
 <script>
 import { User } from '@/models/user'
 import { LTHistory } from '@/models/ltHistory'
+import { Setting } from '@/models/setting'
 import Chart from '@/components/ui/BarChart.js'
 import {
   DAY,
@@ -315,14 +320,18 @@ export default {
     Chart
   },
   data: () => ({
+    setting: {
+      settings: {
+        filterStartDate: null,
+        filterEndDate: null
+      }
+    },
     loading: false,
     lotteryDialog: false,
     lotteryTitle: TITLE_LOTTERY,
     numOfPresenters: 0,
     maxNumOfPresenters: 0,
     implementationLTDate: null,
-    lotteryStartDate: null,
-    lotteryEndDate: null,
     stillChoosing: false,
     resultScreen: false,
     checkOverwriteDialog: false,
@@ -332,6 +341,7 @@ export default {
     userDataListToDraw: [],
     headers: [],
     allLTHistory: [],
+    ltHistoryFiltered: [],
     detailCounts: [],
     defaultScoreList: [],
     targetList: [],
@@ -414,17 +424,21 @@ export default {
 
           self.loadingDialog.open()
 
-          // 現在位置より上に移動したかどうか
-          const isUp = newIndex < oldIndex
-
           // ドラッグした履歴
-          const item = self.allLTHistory.find(x => x.index === oldIndex)
+          const item = self.ltHistoryFiltered[oldIndex]
+          const oldHistoryIndex = item.index
+          // ドラッグした先の履歴
+          const itemOfDraggedDestination = self.ltHistoryFiltered[newIndex]
+          const newHistoryIndex = itemOfDraggedDestination.index
+
+          // 現在位置より上に移動したかどうか
+          const isUp = newHistoryIndex < oldHistoryIndex
           // ドラッグしたことによって位置がズレる履歴を抽出する
           const itemList = self.allLTHistory.filter(x => {
             if (isUp) {
-              return x.index >= newIndex && x.index < oldIndex
+              return x.index >= newHistoryIndex && x.index < oldHistoryIndex
             } else {
-              return x.index > oldIndex && x.index <= newIndex
+              return x.index > oldHistoryIndex && x.index <= newHistoryIndex
             }
           })
 
@@ -437,7 +451,7 @@ export default {
           // indexを更新
           // self.loadingDialog.open()の処理が完了する前にclose()が呼ばれエラー発生するためawait
           await item.update({
-            index: newIndex
+            index: newHistoryIndex
           })
 
           self.loadingDialog.close()
@@ -454,6 +468,7 @@ export default {
       this.loading = true
 
       // データ初期設定
+      await this.initSetting()
       await this.initAllLTHistory()
       await this.initUserDataList()
       this.initImplementationLTDate()
@@ -475,6 +490,29 @@ export default {
      * ユーザーデータ初期処理
      */
     async initUserDataList () {
+      // LT実施履歴から対象期間のみを取得する
+      this.ltHistoryFiltered = this.allLTHistory.filter((x) => {
+        if (!isDate(x.date)) {
+          return true
+        }
+
+        var isTargetPeriod = true
+        if (isDate(this.setting.settings.filterStartDate)) {
+          isTargetPeriod = isTargetPeriod && (x.date >= this.setting.settings.filterStartDate)
+        }
+        if (isDate(this.setting.settings.filterEndDate)) {
+          isTargetPeriod = isTargetPeriod && (x.date <= this.setting.settings.filterEndDate)
+        }
+        return isTargetPeriod
+      })
+      this.ltHistoryFiltered.sort((a, b) => {
+        if (a.index > b.index) {
+          return 1
+        } else {
+          return -1
+        }
+      })
+
       // 全ユーザー情報を取得
       const allUserList = await User.getAllUsers()
 
@@ -495,18 +533,16 @@ export default {
           for (var detail of x.details) {
             isUser = detail.uid === user.uid
             if (isUser) {
-              // ユーザーの実施履歴がある場合はループを抜ける
               break
             }
           }
 
-          // 指定された対象期間内の記録のみ集計する
           var isTargetPeriod = true
-          if (isDate(this.lotteryStartDate)) {
-            isTargetPeriod = isTargetPeriod && (x.date >= this.lotteryStartDate)
+          if (isDate(this.setting.settings.filterStartDate)) {
+            isTargetPeriod = isTargetPeriod && (x.date >= this.setting.settings.filterStartDate)
           }
-          if (isDate(this.lotteryStartDate)) {
-            isTargetPeriod = isTargetPeriod && (x.date <= this.lotteryEndDate)
+          if (isDate(this.setting.settings.filterEndDate)) {
+            isTargetPeriod = isTargetPeriod && (x.date <= this.setting.settings.filterEndDate)
           }
           return isUser && isTargetPeriod
         })
@@ -524,12 +560,13 @@ export default {
           lastDate = getLastDate(dateHistory)
         }
 
+        const isSkip = this.setting.settings.skipUsers.includes(user.uid)
         const userData = {
           user: user,
           numOfPresentations: numOfPresentations,
           lastDate: lastDate,
           lastDateTxt: convertStringFromDate(lastDate),
-          checked: false
+          checked: isSkip
         }
         userDataList.push(userData)
       }
@@ -594,21 +631,15 @@ export default {
       }
     },
     /**
+     * 設置初期処理
+     */
+    async initSetting () {
+      this.setting = await Setting.get('LTHistory')
+    },
+    /**
      * グラフのオプション初期処理
      */
     initChartOptions () {
-      const startDateData = this.getMinDateData(this.allLTHistory, 'date')
-      const endDateData = this.getMaxDateData(this.allLTHistory, 'date')
-
-      this.lotteryStartDate = null
-      this.lotteryEndDate = null
-      if (startDateData) {
-        this.lotteryStartDate = startDateData.date
-      }
-      if (endDateData) {
-        this.lotteryEndDate = endDateData.date
-      }
-
       this.halfCircleWidth = `${this.circleWidth} / 2`
       this.numOfPresenters = this.$store.state.ltSettings.numOfPresenters
     },
@@ -695,6 +726,36 @@ export default {
           return
         }
         this.userListnerInitialized = true
+      })
+    },
+    /**
+     * 抽選対象期間（フィルター条件）を更新する
+     */
+    async updatefilterDate () {
+      const filterStartDate = this.setting.settings.filterStartDate
+      const filterEndDate = this.setting.settings.filterEndDate
+      await this.setting.update({
+        settings: {
+          ...this.setting.settings,
+          filterStartDate: filterStartDate,
+          filterEndDate: filterEndDate
+        }
+      })
+      await this.initUserDataList()
+    },
+    /**
+     * 抽選スキップするユーザーを更新する
+     */
+    async updateSkipUsers () {
+      const checkedUserList = this.userDataList.filter((x) => {
+        return x.checked
+      })
+      const checkedList = checkedUserList.map(x => x.user.uid)
+      await this.setting.update({
+        settings: {
+          ...this.setting.settings,
+          skipUsers: checkedList
+        }
       })
     },
 

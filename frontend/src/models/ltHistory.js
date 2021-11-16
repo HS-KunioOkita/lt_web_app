@@ -118,7 +118,7 @@ export class LTHistory extends ModelBase {
   }
 
   /**
-   * プロフィールの変更を監視する
+   * LT実施履歴の変更を監視する
    * @param {Function} callbackFunc 監視対象に変更があった時に実施する処理
    */
   static async onSnapshots (callbackFunc) {

@@ -344,6 +344,8 @@ class Firestore {
     for (const key in data_) {
       if (data[key] instanceof firebase.firestore.Timestamp) {
         data_[key] = data[key].toDate()
+      } else if (data[key] instanceof Object) {
+        data_[key] = this.convertDate(data[key])
       }
     }
     return data_
