@@ -5,7 +5,7 @@
 ## Build Setup
 
 ``` bash
-# ライブラリインストール
+# ライブラリインストール python 3.7が必要
 pipenv install [package]
 
 # serve with hot reload at localhost:5000（ソースコードが変更されると自動リロードされる）
